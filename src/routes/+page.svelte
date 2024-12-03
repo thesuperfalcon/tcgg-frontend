@@ -1,12 +1,19 @@
 <script>
-    import GetGame from '$lib/getgame.svelte';
-    let gameData = null;
-    let errorMessage = '';
-  </script>
+  import GetGame from '$lib/getgame.svelte';
+  import Board from '../style/board.svelte';
   
-  <GetGame bind:gameData bind:errorMessage />  <!-- Bind the reactive variables to GetGame component -->
+  let gameData = null;
+  let errorMessage = '';
+</script>
 
-  {#if errorMessage}
+<GetGame bind:gameData bind:errorMessage />
+<Board>
+
+</Board>
+
+
+
+  <!-- {#if errorMessage}
     <p style="color: red;">Error: {errorMessage}</p>
   {:else if gameData}
     <div>
@@ -37,5 +44,5 @@
     </div>
   {:else}
     <p>Loading match data...</p>
-  {/if}
+  {/if} -->
   
