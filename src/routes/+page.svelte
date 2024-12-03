@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
   import { fetchDrawRndCardP1, fetchDrawRndCardP2, fetchPlayCardP1, fetchPlayCardP2, fetchAttackCard } from '$api/card.js';
 	import { fetchMatchData, fetchStartGame, fetchEndTurn } from '$api/match.js'; // Use the API module
-  import { fetchAttackPlayer } from '$api/player.js';
+  import { fetchAttackPlayer1, fetchAttackPlayer2 } from '$api/player.js';
 
 	let gameData = null;
 	let errorMessage = '';
@@ -123,16 +123,26 @@
       console.error('Error during attack:', error);
     }
   }
+  
+  async function attackPlayer(cardId, player) {
+  try {
+    // Conditionally call the appropriate fetchAttackPlayer function based on the player
+    const result = player === 'player1' 
+      ? await fetchAttackPlayer1(cardId) 
+      : await fetchAttackPlayer2(cardId);
 
-  async function attackPlayer(cardId, playerId){
-    try {
-      const result = await fetchAttackPlayer(playerId, cardId);
-      console.log('Attack result:', result);
-    } catch (error) {
-      console.error('Error during attack:', error);
-    }
+    // Call the attackCard function with appropriate player ID
+    attackCard(cardId, null, player === 'player1' ? 1 : 2);
+
+    // Fetch the latest game data to refresh the state
+    gameData = await fetchMatchData();  // Refresh the game state
+  } catch (error) {
+    console.error('Error during attack:', error);
   }
+}
+
 </script>
+
 
 <div>
   <!-- Error Handling -->
@@ -189,9 +199,9 @@
       <ul>
         {#each gameData.board.player1Field as card}
           <li>
-            {card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})
+            Id:{card.id} {card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})
             <button on:click={() => selectAttack(card.id, 'player2')}>Attack Opponent's Card</button>
-            <button on:click={() => attackPlayer(card.id, playerIds)}>Attack Player</button>
+            <button on:click={() => attackPlayer(card.id, 'player1')}>Attack Player</button>
           </li>
         {/each}
       </ul>
@@ -232,8 +242,9 @@
       <ul>
         {#each gameData.board.player2Field as card}
           <li>
-            {card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})
+            Id:{card.id} {card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})
             <button on:click={() => selectAttack(card.id, 'player1')}>Attack Opponent's Card</button>
+            <button on:click={() => attackPlayer(card.id, 'player2')}>Attack Player</button>
           </li>
         {/each}
       </ul>

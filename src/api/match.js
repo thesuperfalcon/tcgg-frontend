@@ -4,7 +4,7 @@ export async function fetchStartGame() {
         if (!response.ok) {
             throw new Error('Failed to fetch match data');
         }
-        return await response.json();
+        return await response.text();
     } catch (error) {
         console.error(error);
     }
@@ -37,3 +37,14 @@ export async function fetchEndTurn(playerId) {
     }
 }
 
+export async function fetchGetBoard() {
+    try {
+        const response = await fetch('https://localhost:44393/getBoard');
+        if (!response.ok) {
+            throw new Error('Failed to fetch match data');
+        }
+        return await response.json();
+    } catch (error) {
+        throw error;
+    }
+}
