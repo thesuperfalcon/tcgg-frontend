@@ -1,6 +1,6 @@
 <style>
-    .card {
-      background-color: orange;
+    .deck {
+      background-color: greenyellow;
       border: 1px solid black; 
       display: flex;
       flex-direction: column;
@@ -16,13 +16,13 @@
       transition: transform 0.2s; 
     }
   
-    .card:hover {
+    .deck:hover {
       font-weight: bolder;
       font-size: larger;
       transform: scale(1.05); 
     }
   </style>
   
-  <div class="card">
-    <slot></slot>
+  <div class="deck">
+    <slot></slot>   
   </div>

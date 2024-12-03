@@ -1,32 +1,25 @@
 <script>
-    import GetGame from '$lib/getgame.svelte'; 
-    import Hand from '../style/hand.svelte';
+    import GetGame from '$lib/getgame.svelte';
+    import Card from '../style/card.svelte'; 
+    import Deck from '../style/deck.svelte';
   
-    let gameData = null;
-    let errorMessage = '';
+    export let gameData = null; 
+    export let errorMessage = '';
   
-    const player1Hand = [1, 2, 3, 4, 5, 6, 7];
-    const player2Hand = [28, 29, 30, 31, 32, 33, 34];
+    let player1Hand = [];
+    let player2Hand = [];
+    let player1Field = [];
+    let player2Field = [];
   
-    function hasCard(row, index) {
-      return row.includes(index);
+    $: {
+      if (gameData) {
+        player1Hand = gameData.player1.hand || [];
+        player2Hand = gameData.player2.hand || [];
+        player1Field = gameData.player1.field || Array(7).fill(null);
+        player2Field = gameData.player2.field || Array(7).fill(null);
+      }
     }
   </script>
-  
-  <GetGame bind:gameData bind:errorMessage />
-  
-  <div class="container">
-    {#each Array(36) as _, index}
-      <div class="box">
-        {#if hasCard(player1Hand, index)}
-          <Hand hand={player1Hand} gameData={gameData} playerId="player1" />
-        {/if}
-        {#if hasCard(player2Hand, index)}
-          <Hand hand={player2Hand} gameData={gameData} playerId="player2" />
-        {/if}
-      </div>
-    {/each}
-  </div>
   
   <style>
     :global(html, body) {
@@ -38,26 +31,67 @@
     }
   
     .container {
-      display: grid;
-      grid-template-columns: repeat(9, 1fr);
-      grid-template-rows: repeat(4, 1fr);
-      column-gap: 0;
-      row-gap: 10px;
-      padding: 10px;
+      display: flex;
+      flex-direction: column;
       height: 100vh;
       width: 100vw;
       background-color: rebeccapurple;
       box-sizing: border-box;
+      padding: 10px;
     }
   
-    .box {
-      background-color: white;
-      border: 1px solid black;
+    .row {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      height: 100%;
+      justify-content: flex-start; 
+      margin-bottom: 10px;
+      flex: 1; 
+      justify-content: center; 
+
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 10px;
     }
   </style>
   
+  <div class="container">
+    <GetGame bind:gameData bind:errorMessage />
+  
+    {#if errorMessage}
+      <div class="error">{errorMessage}</div>
+    {:else if gameData}
+      <!-- Player 1 Hand (Row 1) -->
+      <div class="row">
+        {#each player1Hand as card, index}
+          <Card>{card ? card.name : 'P1 Hand ' + (index + 1)}</Card>
+        {/each}
+        <Deck>Deck</Deck>
+      </div>
+  
+      <!-- Player 1 Field (Row 2) -->
+      <div class="row">
+        {#each player1Field as card, index}
+          <Card>{card ? card.name : 'P1 Field ' + (index + 1)}</Card>
+        {/each}
+      </div>
+  
+      <!-- Player 2 Field (Row 3) -->
+      <div class="row">
+        {#each player2Field as card, index}
+          <Card>{card ? card.name : 'P2 Field ' + (index + 1)}</Card>
+        {/each}
+      </div>
+  
+      <!-- Player 2 Hand (Row 4) -->
+      <div class="row">
+        <Deck>Deck</Deck>
+        {#each player2Hand as card, index}
+          <Card>{card ? card.name : 'P2 Hand ' + (index + 1)}</Card>
+        {/each}
+      </div>
+    {:else}
+      <p style="text-align: center;">Loading game data...</p>
+    {/if}
+  </div>
