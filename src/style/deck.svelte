@@ -1,3 +1,7 @@
+<script>
+    import drawCardP1  from '../routes/+page.svelte';
+  </script>
+
 <style>
     .deck {
       background-color: greenyellow;
@@ -22,7 +26,7 @@
       transform: scale(1.05); 
     }
   </style>
-  
-  <div class="deck">
-    <slot></slot>   
-  </div>
+
+<div class="deck">
+  <button on:click={drawCardP1()}>Draw Card</button>
+</div>

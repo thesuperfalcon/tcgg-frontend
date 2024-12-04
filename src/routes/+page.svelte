@@ -3,6 +3,9 @@
   import { fetchDrawRndCardP1, fetchDrawRndCardP2, fetchPlayCardP1, fetchPlayCardP2, fetchAttackCard } from '$api/card.js';
 	import { fetchMatchData, fetchStartGame, fetchEndTurn } from '$api/match.js'; // Use the API module
   import { fetchAttackPlayer1, fetchAttackPlayer2 } from '$api/player.js';
+  import Board from '../style/board.svelte';
+  import GetGame from '$lib/getgame.svelte';
+
 
 	let gameData = null;
 	let errorMessage = '';
@@ -33,7 +36,7 @@
 		}
 	});
 
-  async function drawCardP1() {
+  export async function drawCardP1() {
     try {
       const result = await fetchDrawRndCardP1();
       console.log('Card drawn:', result);
@@ -73,7 +76,6 @@
       errorMessage = `Failed to end turn for player ${currentPlayerId}: ${error.message}`;
     }
   }
-
   
   async function playCardP1(cardId) {
     try {
@@ -141,119 +143,22 @@
   }
 }
 
+onMount(async () => {
+        try {
+            gameData = await fetchMatchData();
+        } catch (error) {
+            errorMessage = error.message;
+        }
+    });
+
 </script>
 
-
-<div>
-  <!-- Error Handling -->
-  {#if errorMessage}
-    <p>Error: {errorMessage}</p>
-  {:else}
-
-  <!-- Game Data Display -->
-  {#if gameData}
-    <!-- Game Status -->
-    <div>
-      <h2>Game Status     <!-- Start Game Button -->
-        <button on:click={StartGame}>Start Game</button>
-      </h2>
-      <h3>Turn: {gameData.board.turns}</h3>
-      <h3>Current Turn: Player {gameData.board.currentPlayerId} 
-      <button on:click={endTurn}>End Turn for Player {gameData.board.currentPlayerId}</button>
-      </h3>
-      
-    </div>
-
-    <!-- Player 1 Section -->
-    <div>
-      <h3>{gameData.board.player1.name} (Health: {gameData.board.player1.health})</h3>
-      <p>Cards in Match Deck: {gameData.board.player1.matchDeck.cards.length}</p>
-      
-      <h4>Match Deck:</h4>
-      <ul>
-        {#each gameData.board.player1.matchDeck.cards as card}
-          <li>{card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})</li>
-        {/each}
-      </ul>
-
-      <h4>Graveyard:</h4>
-      <ul>
-        {#each gameData.board.player1.graveyard as card}
-          <li>{card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})</li>
-        {/each}
-      </ul>
-
-      <h4>Cards in Hand:</h4>
-      <ul>
-        {#each gameData.board.player1.hand as card}
-          <li>
-            {card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})
-            <button on:click={() => playCardP1(card.id)}>Play {card.name}</button>
-          </li>
-        {/each}
-      </ul>
-
-      <button on:click={drawCardP1}>Player 1 draw card</button>
-
-      <h4>Field:</h4>
-      <ul>
-        {#each gameData.board.player1Field as card}
-          <li>
-            Id:{card.id} {card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})
-            <button on:click={() => selectAttack(card.id, 'player2')}>Attack Opponent's Card</button>
-            <button on:click={() => attackPlayer(card.id, 'player1')}>Attack Player</button>
-          </li>
-        {/each}
-      </ul>
-    </div>
-
-    <!-- Player 2 Section (Made identical to Player 1) -->
-    <div>
-      <h3>{gameData.board.player2.name} (Health: {gameData.board.player2.health})</h3>
-      <p>Cards in Match Deck: {gameData.board.player2.matchDeck.cards.length}</p>
-
-      <h4>Match Deck:</h4>
-      <ul>
-        {#each gameData.board.player2.matchDeck.cards as card}
-          <li>{card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})</li>
-        {/each}
-      </ul>
-
-      <h4>Graveyard:</h4>
-      <ul>
-        {#each gameData.board.player2.graveyard as card}
-          <li>{card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})</li>
-        {/each}
-      </ul>
-
-      <h4>Cards in Hand:</h4>
-      <ul>
-        {#each gameData.board.player2.hand as card}
-          <li>
-            {card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})
-            <button on:click={() => playCardP2(card.id)}>Play {card.name}</button>
-          </li>
-        {/each}
-      </ul>
-
-      <button on:click={drawCardP2}>Player 2 draw card</button>
-
-      <h4>Field:</h4>
-      <ul>
-        {#each gameData.board.player2Field as card}
-          <li>
-            Id:{card.id} {card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})
-            <button on:click={() => selectAttack(card.id, 'player1')}>Attack Opponent's Card</button>
-            <button on:click={() => attackPlayer(card.id, 'player2')}>Attack Player</button>
-          </li>
-        {/each}
-      </ul>
-    </div>
-
-
-
-  {:else}
-    <p>Loading match data...</p>
+{#if errorMessage}
+    <p style="color: red;">Error: {errorMessage}</p>
+  {:else if gameData}
+      <h2>Board Info || Turn: {gameData.board.turns} Current Turn: Player {gameData.board.currentPlayerId}</h2>
+      <button on:click={drawCardP1}>Draw Card P1</button>
   {/if}
-  {/if}
-</div>
+
+<Board gameData={gameData} errorMessage={errorMessage} />
+

@@ -1,5 +1,4 @@
 <script>
-    import GetGame from '$lib/getgame.svelte';
     import Card from '../style/card.svelte'; 
     import Deck from '../style/deck.svelte';
   
@@ -10,15 +9,19 @@
     let player2Hand = [];
     let player1Field = [];
     let player2Field = [];
+
   
     $: {
       if (gameData) {
         player1Hand = gameData.player1.hand || [];
         player2Hand = gameData.player2.hand || [];
-        player1Field = gameData.player1.field || Array(7).fill(null);
-        player2Field = gameData.player2.field || Array(7).fill(null);
+        player1Field = gameData.board.player1Field || [];
+        player2Field = gameData.board.player2Field || [];
+
       }
     }
+
+
   </script>
   
   <style>
@@ -57,7 +60,7 @@
   </style>
   
   <div class="container">
-    <GetGame bind:gameData bind:errorMessage />
+    <!-- <GetGame bind:gameData bind:errorMessage /> -->
   
     {#if errorMessage}
       <div class="error">{errorMessage}</div>
@@ -65,33 +68,66 @@
       <!-- Player 1 Hand (Row 1) -->
       <div class="row">
         {#each player1Hand as card, index}
-          <Card>{card ? card.name : 'P1 Hand ' + (index + 1)}</Card>
+          <Card>
+            {#if card}
+              {card.name}<br />
+              Health: {card.health}<br />
+              Attack: {card.attack}
+            {:else}
+              P1 Hand {index + 1}
+            {/if}
+          </Card>
         {/each}
-        <Deck>Deck</Deck>
+        <Deck>
+        </Deck>
       </div>
-  
+      
       <!-- Player 1 Field (Row 2) -->
       <div class="row">
         {#each player1Field as card, index}
-          <Card>{card ? card.name : 'P1 Field ' + (index + 1)}</Card>
+          <Card>
+            {#if card}
+              {card.name}<br />
+              Health: {card.health}<br />
+              Attack: {card.attack}
+            {:else}
+              P1 Field {index + 1}
+            {/if}
+          </Card>
         {/each}
       </div>
-  
+      
       <!-- Player 2 Field (Row 3) -->
       <div class="row">
         {#each player2Field as card, index}
-          <Card>{card ? card.name : 'P2 Field ' + (index + 1)}</Card>
+          <Card>
+            {#if card}
+              {card.name}<br />
+              Health: {card.health}<br />
+              Attack: {card.attack}
+            {:else}
+              P2 Field {index + 1}
+            {/if}
+          </Card>
         {/each}
       </div>
-  
+      
       <!-- Player 2 Hand (Row 4) -->
       <div class="row">
         <Deck>Deck</Deck>
         {#each player2Hand as card, index}
-          <Card>{card ? card.name : 'P2 Hand ' + (index + 1)}</Card>
+          <Card>
+            {#if card}
+              {card.name}<br />
+              Health: {card.health}<br />
+              Attack: {card.attack}
+            {:else}
+              P2 Hand {index + 1}
+            {/if}
+          </Card>
         {/each}
       </div>
-    {:else}
-      <p style="text-align: center;">Loading game data...</p>
-    {/if}
+      {:else}
+        <p style="text-align: center;">Loading game data...</p>
+      {/if}
   </div>
