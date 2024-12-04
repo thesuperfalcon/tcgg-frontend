@@ -7,12 +7,14 @@
   export let gameData = null; 
   export let errorMessage = '';
   let currentPlayerId = null;
-  let player1Id = null;
-  let player2Id = null;
+  // let player1Id = null;
+  // let player2Id = null;
   let selectedCardIdP1 = null;
   let selectedCardIdP2 = null;
   let selectedAttackCardId = null;
   let selectedDefendCardId = null;
+  let player1 = null;
+  let player2 = null;
 
   let player1Hand = [];
   let player2Hand = [];
@@ -27,13 +29,36 @@
       player1Field = gameData.board.player1Field || [];
       player2Field = gameData.board.player2Field || [];
 
-      player1Id = gameData.player1.id;
-      player2Id = gameData.player2.id;
+      // player1Id = gameData.player1.id;
+      // player2Id = gameData.player2.id;
+      player1 = gameData.player1;
+      player2 = gameData.player2;
 
       currentPlayerId = gameData.board.currentPlayerId;
 
     }
   }
+
+
+  async function drawCard(playerId) {
+  try {
+    const result = playerId === 1 
+      ? await fetchDrawRndCardP1() 
+      : await fetchDrawRndCardP2(); 
+
+    console.log('Card drawn:', result);
+
+    if (playerId === 1) {
+      selectedCardIdP1 = result.cardId;
+    } else {
+      selectedCardIdP2 = result.cardId; 
+    }
+
+    gameData = await fetchMatchData();
+  } catch (error) {
+    errorMessage = `Failed to draw card for player ${playerId}: ${error.message}`;
+  }
+}
 
   async function playCard(playerId, cardId) {
   try {
@@ -52,7 +77,7 @@
     selectedDefendCardId = cardId;
     
     // Now perform the attack action
-    attackCard(selectedAttackCardId, selectedDefendCardId, currentPlayerId);
+    await attackCard(selectedAttackCardId, selectedDefendCardId, currentPlayerId);
     
     // Reset the selected cards after the attack
     selectedAttackCardId = null;
@@ -73,15 +98,10 @@ async function attackCard(attackCardId, defenseCardId, playerId) {
   }
 }
 
-async function attackPlayer(cardId, player) {
+async function attackPlayer(attackCardId, playerId) {
     try {
       // Conditionally call the appropriate fetchAttackPlayer function based on the player
-      const result = player === 'player1' 
-        ? await fetchAttackPlayer1(cardId) 
-        : await fetchAttackPlayer2(cardId);
-
-      // Call the attackCard function with appropriate player ID
-      attackCard(cardId, null, player === 'player1' ? 1 : 2);
+      const result = await fetchAttackCard(attackCardId, null, playerId);
 
       // Fetch the latest game data to refresh the state
       gameData = await fetchMatchData();  // Refresh the game state
@@ -89,9 +109,6 @@ async function attackPlayer(cardId, player) {
       console.error('Error during attack:', error);
     }
   }
-
-
-
 
 </script>
 
@@ -119,7 +136,7 @@ async function attackPlayer(cardId, player) {
     justify-content: flex-start; 
     margin-bottom: 10px;
     flex: 1; 
-    justify-content: center; 
+    justify-content: center;
 
   }
   .error {
@@ -131,11 +148,19 @@ async function attackPlayer(cardId, player) {
 </style>
 
 <div class="container">
+
   <!-- <GetGame bind:gameData bind:errorMessage /> -->
 
   {#if errorMessage}
     <div class="error">{errorMessage}</div>
   {:else if gameData}
+
+  <div class="row">
+    <Card>
+      {player1.name}<br>
+      HP: {player2.health}
+    </Card>
+  </div>
     <!-- Player 1 Hand (Row 1) -->
     <div class="row">
       {#each player1Hand as card, index}
@@ -151,14 +176,15 @@ async function attackPlayer(cardId, player) {
         </Card>
       </div>
       {/each}
-      <Deck gameData={gameData} errorMessage={errorMessage} playerId={1}>
+      <Deck>
+        <button onclick={() => drawCard(player1.id)}>Draw Card</button>
       </Deck>
     </div>
     
     <!-- Player 1 Field (Row 2) -->
     <div class="row">
       {#each player1Field as card, index}
-      <div onclick={() => selectAttack(1, card.id)}>
+      <div onclick={() => selectAttack(player1.id, card.id)}>
         <Card>
           {#if card}
             {card.name}<br />
@@ -175,7 +201,7 @@ async function attackPlayer(cardId, player) {
     <!-- Player 2 Field (Row 3) -->
     <div class="row">
       {#each player2Field as card, index}
-      <div ondblclick={() => selectAttack(2, card.id)}>
+      <div onclick={() => selectAttack(player2.id, card.id)}>
       <Card>
         {#if card}
             {card.name}<br />
@@ -191,9 +217,11 @@ async function attackPlayer(cardId, player) {
     
     <!-- Player 2 Hand (Row 4) -->
     <div class="row">
-      <Deck gameData={gameData} errorMessage={errorMessage} playerId={2}/>
+      <Deck>
+        <button onclick={() => drawCard(player2.id)}>Draw Card</button>
+      </Deck>
       {#each player2Hand as card, index}
-      <div ondblclick={() => playCard(2, card.id)}>
+      <div onclick={() => playCard(2, card.id)}>
       <Card >
           {#if card}
             {card.name}<br />
@@ -205,6 +233,12 @@ async function attackPlayer(cardId, player) {
         </Card>
       </div>
       {/each}
+    </div>
+    <div class="row">
+      <Card >
+        {player2.name}<br>
+        HP: {player2.health}
+      </Card>
     </div>
     {:else}
       <p style="text-align: center;">Loading game data...</p>

@@ -1,29 +1,5 @@
 <script>
-  import { fetchDrawRndCardP1, fetchDrawRndCardP2} from '$api/card.js';
 
-  export let gameData = null;
-  export let errorMessage = '';
-  export let playerId = null;
-
-  export async function drawCard(playerId) {
-  try {
-    const result = playerId === 1 
-      ? await fetchDrawRndCardP1() 
-      : await fetchDrawRndCardP2(); 
-
-    console.log('Card drawn:', result);
-
-    if (playerId === 1) {
-      selectedCardIdP1 = result.cardId;
-    } else {
-      selectedCardIdP2 = result.cardId; 
-    }
-
-    gameData = await fetchMatchData();
-  } catch (error) {
-    errorMessage = `Failed to draw card for player ${playerId}: ${error.message}`;
-  }
-}
 </script>
   
   <style>
@@ -52,6 +28,6 @@
   </style>
   
   <div class="deck">
-    <button on:click={drawCard(playerId)}>Draw Card</button>
+    <slot></slot>
   </div>
   

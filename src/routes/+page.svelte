@@ -10,11 +10,23 @@
 	let gameData = null;
 	let errorMessage = '';
   let currentPlayerId = null;
-  let playerIds = [1, 2];
+  let player1Id = null;
+  let player2Id = null;
   let selectedCardIdP1 = null;
   let selectedCardIdP2 = null;
   let selectedAttackCardId = null;
   let selectedDefendCardId = null;
+
+  $: {
+    if (gameData) {
+
+      player1Id = gameData.player1.id;
+      player2Id = gameData.player2.id;
+
+      currentPlayerId = gameData.board.currentPlayerId;
+
+    }
+  }
 
   async function StartGame(){
     try {
@@ -36,41 +48,25 @@
 		}
 	});
 
-  export async function drawCardP1() {
-    try {
-      const result = await fetchDrawRndCardP1();
-      console.log('Card drawn:', result);
-      selectedCardIdP1 = result.cardId;
-      gameData = await fetchMatchData();
-    } catch (error) {
-      errorMessage = `Failed to draw card for player 1: ${error.message}`;
-    }
-  }
-
-  async function drawCardP2() {
-    try {
-      const result = await fetchDrawRndCardP2();
-      console.log('Card drawn:', result);
-      selectedCardIdP2 = result.cardId;
-      gameData = await fetchMatchData();
-    } catch (error) {
-      errorMessage = `Failed to draw card for player 2: ${error.message}`;
-    }
-  }
 
   async function endTurn() {
     try {
-      if (currentPlayerId === null) {
+      if (!gameData ||currentPlayerId === null) {
         throw new Error('No player has started yet.');
       }
       
-      const result = await fetchEndTurn(currentPlayerId); // End the turn for the current player
+      console.log('Ending turn for player:', currentPlayerId)
+
+      const result = await fetchEndTurn(currentPlayerId);
       console.log('Turn ended for player:', currentPlayerId, result);
 
       // Switch to the next player's turn
-      currentPlayerId = currentPlayerId === playerIds[0] ? playerIds[1] : playerIds[0];
+      if (currentPlayerId === player1Id) {
+        currentPlayerId = player2Id;
+      } else {
+        currentPlayerId = player1Id;
+      }
 
-      // Refresh the game data after ending the turn
       gameData = await fetchMatchData();
     } catch (error) {
       errorMessage = `Failed to end turn for player ${currentPlayerId}: ${error.message}`;
@@ -143,13 +139,6 @@
   }
 }
 
-onMount(async () => {
-        try {
-            gameData = await fetchMatchData();
-        } catch (error) {
-            errorMessage = error.message;
-        }
-    });
 
 </script>
 
@@ -157,7 +146,9 @@ onMount(async () => {
     <p style="color: red;">Error: {errorMessage}</p>
   {:else if gameData}
       <h2>Board Info || Turn: {gameData.board.turns} Current Turn: Player {gameData.board.currentPlayerId}</h2>
-      <button on:click={drawCardP1}>Draw Card P1</button>
+      <button onclick={StartGame}>Start Game</button>
+      <button onclick={endTurn}>End turn for player: {gameData.board.currentPlayerId}</button>
+
   {/if}
 
 <Board gameData={gameData} errorMessage={errorMessage} />
