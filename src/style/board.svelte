@@ -31,8 +31,8 @@
 
       // player1Id = gameData.player1.id;
       // player2Id = gameData.player2.id;
-      player1 = gameData.player1;
-      player2 = gameData.player2;
+      player1 = gameData.board.player1;
+      player2 = gameData.board.player2;
 
       currentPlayerId = gameData.board.currentPlayerId;
 
@@ -190,6 +190,7 @@ async function attackPlayer(attackCardId, playerId) {
             {card.name}<br />
             Health: {card.health}<br />
             Attack: {card.attack}
+            <button onclick={() => attackPlayer(card.id, player1.id)}>attack player</button>
           {:else}
             P1 Field {index + 1}
           {/if}
@@ -207,8 +208,9 @@ async function attackPlayer(attackCardId, playerId) {
             {card.name}<br />
             Health: {card.health}<br />
             Attack: {card.attack}
+            <button onclick={() => attackPlayer(card.id, player2.id)}>attack player</button>
           {:else}
-            P2 Field {index + 1}
+            P2 Field {index + 1}  
           {/if}
         </Card>
       </div>
