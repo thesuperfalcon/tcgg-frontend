@@ -12,6 +12,7 @@
   let selectedCardIdP1 = null;
   let selectedCardIdP2 = null;
   let selectedAttackCardId = null;
+  let highlightedCards = [];
   let selectedDefendCardId = null;
   let player1 = null;
   let player2 = null;
@@ -20,6 +21,7 @@
   let player2Hand = [];
   let player1Field = [];
   let player2Field = [];
+
 
 
   $: {
@@ -73,6 +75,7 @@
   async function selectAttack(playerId, cardId) {
   if (selectedAttackCardId === null) {
     selectedAttackCardId = cardId;
+    highlightedCards = playerId === 1 ? player2Field.map(card => card.id) : player1Field.map(card => card.id);
   } else {
     selectedDefendCardId = cardId;
     
@@ -82,6 +85,7 @@
     // Reset the selected cards after the attack
     selectedAttackCardId = null;
     selectedDefendCardId = null;
+    highlightedCards = [];
   }
   }
 
@@ -145,6 +149,19 @@ async function attackPlayer(attackCardId, playerId) {
     text-align: center;
     margin-bottom: 10px;
   }
+
+  .non-clickable {
+    pointer-events: none;
+
+  }
+    
+  .highlight {
+    outline: 3px solid yellow;
+    background-color: rgba(255, 255, 0, 0.2);
+    transition: outline 0.3s ease, background-color 0.3s ease;
+  }
+  
+
 </style>
 
 <div class="container">
@@ -157,8 +174,10 @@ async function attackPlayer(attackCardId, playerId) {
 
   <div class="row">
     <Card>
+      <div class="non-clickable">
       {player1.name}<br>
       HP: {player2.health}
+    </div>
     </Card>
   </div>
     <!-- Player 1 Hand (Row 1) -->
@@ -167,9 +186,11 @@ async function attackPlayer(attackCardId, playerId) {
       <div onclick={() => playCard(1, card.id)}>
         <Card>
           {#if card}
+          <div class="non-clickable">
             {card.name}<br />
             Health: {card.health}<br />
             Attack: {card.attack}
+          </div>
           {:else}
             P1 Hand {index + 1}
           {/if}
@@ -184,12 +205,17 @@ async function attackPlayer(attackCardId, playerId) {
     <!-- Player 1 Field (Row 2) -->
     <div class="row">
       {#each player1Field as card, index}
-      <div onclick={() => selectAttack(player1.id, card.id)}>
+      <div 
+      class:selected={highlightedCards === card.id}
+      class:highlight={highlightedCards.includes(card.id)}
+      onclick={() => selectAttack(player1.id, card.id)}>
         <Card>
           {#if card}
+          <div class="non-clickable">
             {card.name}<br />
             Health: {card.health}<br />
             Attack: {card.attack}
+          </div>
             <button onclick={() => attackPlayer(card.id, player1.id)}>attack player</button>
           {:else}
             P1 Field {index + 1}
@@ -202,12 +228,17 @@ async function attackPlayer(attackCardId, playerId) {
     <!-- Player 2 Field (Row 3) -->
     <div class="row">
       {#each player2Field as card, index}
-      <div onclick={() => selectAttack(player2.id, card.id)}>
+      <div 
+      class:selected={highlightedCards === card.id}
+      class:highlight={highlightedCards.includes(card.id)}
+      onclick={() => selectAttack(player2.id, card.id)}>
       <Card>
         {#if card}
+        <div class="non-clickable">
             {card.name}<br />
             Health: {card.health}<br />
             Attack: {card.attack}
+          </div>
             <button onclick={() => attackPlayer(card.id, player2.id)}>attack player</button>
           {:else}
             P2 Field {index + 1}  
@@ -226,9 +257,11 @@ async function attackPlayer(attackCardId, playerId) {
       <div onclick={() => playCard(2, card.id)}>
       <Card >
           {#if card}
+          <div class="non-clickable">
             {card.name}<br />
             Health: {card.health}<br />
             Attack: {card.attack}
+          </div>
           {:else}
             P2 Hand {index + 1}
           {/if}
@@ -238,8 +271,10 @@ async function attackPlayer(attackCardId, playerId) {
     </div>
     <div class="row">
       <Card >
+        <div class="non-clickable">
         {player2.name}<br>
         HP: {player2.health}
+      </div>
       </Card>
     </div>
     {:else}
