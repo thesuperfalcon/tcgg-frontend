@@ -3,6 +3,8 @@
   import Deck from '../style/deck.svelte';
   import { fetchMatchData, fetchStartGame, fetchEndTurn } from '$api/match.js'; // Use the API module
   import { fetchDrawRndCardP1, fetchDrawRndCardP2, fetchPlayCardP1, fetchPlayCardP2, fetchAttackCard } from '$api/card.js';
+  import { fetchAttackPlayer1, fetchAttackPlayer2 } from '$api/player.js';
+
 
   export let gameData = null; 
   export let errorMessage = '';
@@ -98,17 +100,22 @@ async function attackCard(attackCardId, defenseCardId, playerId) {
   }
 }
 
-async function attackPlayer(attackCardId, playerId) {
-    try {
-      // Conditionally call the appropriate fetchAttackPlayer function based on the player
-      const result = await fetchAttackCard(attackCardId, null, playerId);
+async function attackPlayer(cardId, playerId) {
+  try {
+    // Conditionally call the appropriate fetchAttackPlayer function based on the player
+    const result = playerId === 1 
+      ? await fetchAttackPlayer1(cardId) 
+      : await fetchAttackPlayer2(cardId);
 
-      // Fetch the latest game data to refresh the state
-      gameData = await fetchMatchData();  // Refresh the game state
-    } catch (error) {
-      console.error('Error during attack:', error);
-    }
+    // Call the attackCard function with appropriate player ID
+    // attackCard(cardId, null, player === 1 ? 1 : 2);
+
+    // Fetch the latest game data to refresh the state
+    gameData = await fetchMatchData();  // Refresh the game state
+  } catch (error) {
+    console.error('Error during attack:', error);
   }
+}
 
 </script>
 
@@ -158,7 +165,7 @@ async function attackPlayer(attackCardId, playerId) {
   <div class="row">
     <Card>
       {player1.name}<br>
-      HP: {player2.health}
+      HP: {player1.health}
     </Card>
   </div>
     <!-- Player 1 Hand (Row 1) -->
@@ -184,7 +191,7 @@ async function attackPlayer(attackCardId, playerId) {
     <!-- Player 1 Field (Row 2) -->
     <div class="row">
       {#each player1Field as card, index}
-      <div onclick={() => selectAttack(player1.id, card.id)}>
+      <div onclick={() => selectAttack(player1.id, card.id)}> 
         <Card>
           {#if card}
             {card.name}<br />
@@ -195,7 +202,7 @@ async function attackPlayer(attackCardId, playerId) {
             P1 Field {index + 1}
           {/if}
         </Card>
-      </div>
+        </div>
       {/each}
     </div>
     
