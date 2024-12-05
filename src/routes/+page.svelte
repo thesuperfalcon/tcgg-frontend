@@ -3,15 +3,30 @@
   import { fetchDrawRndCardP1, fetchDrawRndCardP2, fetchPlayCardP1, fetchPlayCardP2, fetchAttackCard } from '$api/card.js';
 	import { fetchMatchData, fetchStartGame, fetchEndTurn } from '$api/match.js'; // Use the API module
   import { fetchAttackPlayer1, fetchAttackPlayer2 } from '$api/player.js';
+  import Board from '../style/board.svelte';
+  import GetGame from '$lib/getgame.svelte';
+
 
 	let gameData = null;
 	let errorMessage = '';
   let currentPlayerId = null;
-  let playerIds = [1, 2];
+  let player1Id = null;
+  let player2Id = null;
   let selectedCardIdP1 = null;
   let selectedCardIdP2 = null;
   let selectedAttackCardId = null;
   let selectedDefendCardId = null;
+
+  $: {
+    if (gameData) {
+
+      player1Id = gameData.player1.id;
+      player2Id = gameData.player2.id;
+
+      currentPlayerId = gameData.board.currentPlayerId;
+
+    }
+  }
 
   async function StartGame(){
     try {
@@ -33,47 +48,30 @@
 		}
 	});
 
-  async function drawCardP1() {
-    try {
-      const result = await fetchDrawRndCardP1();
-      console.log('Card drawn:', result);
-      selectedCardIdP1 = result.cardId;
-      gameData = await fetchMatchData();
-    } catch (error) {
-      errorMessage = `Failed to draw card for player 1: ${error.message}`;
-    }
-  }
-
-  async function drawCardP2() {
-    try {
-      const result = await fetchDrawRndCardP2();
-      console.log('Card drawn:', result);
-      selectedCardIdP2 = result.cardId;
-      gameData = await fetchMatchData();
-    } catch (error) {
-      errorMessage = `Failed to draw card for player 2: ${error.message}`;
-    }
-  }
 
   async function endTurn() {
     try {
-      if (currentPlayerId === null) {
+      if (!gameData ||currentPlayerId === null) {
         throw new Error('No player has started yet.');
       }
       
-      const result = await fetchEndTurn(currentPlayerId); // End the turn for the current player
+      console.log('Ending turn for player:', currentPlayerId)
+
+      const result = await fetchEndTurn(currentPlayerId);
       console.log('Turn ended for player:', currentPlayerId, result);
 
       // Switch to the next player's turn
-      currentPlayerId = currentPlayerId === playerIds[0] ? playerIds[1] : playerIds[0];
+      if (currentPlayerId === player1Id) {
+        currentPlayerId = player2Id;
+      } else {
+        currentPlayerId = player1Id;
+      }
 
-      // Refresh the game data after ending the turn
       gameData = await fetchMatchData();
     } catch (error) {
       errorMessage = `Failed to end turn for player ${currentPlayerId}: ${error.message}`;
     }
   }
-
   
   async function playCardP1(cardId) {
     try {
@@ -141,119 +139,210 @@
   }
 }
 
+
 </script>
 
+<button onclick={StartGame} type="button" class="btn">
+  <strong>Start Game</strong>
+  <div id="container-stars">
+    <div id="stars"></div>
+  </div>
+  <div id="glow">
+    <div class="circle"></div>
+    <div class="circle"></div>
+  </div>
+</button>
 
-<div>
-  <!-- Error Handling -->
-  {#if errorMessage}
-    <p>Error: {errorMessage}</p>
-  {:else}
+{#if errorMessage}
+    <p style="color: red;">Error: {errorMessage}</p>
+  {:else if gameData}
+      <h2>Board Info || Turn: {gameData.board.turns} Current Turn: Player {gameData.board.currentPlayerId}</h2>
+      <!-- <button onclick={StartGame}>Start Game</button> -->
+      <button onclick={endTurn}>End turn for player: {gameData.board.currentPlayerId}</button>
 
-  <!-- Game Data Display -->
-  {#if gameData}
-    <!-- Game Status -->
-    <div>
-      <h2>Game Status     <!-- Start Game Button -->
-        <button on:click={StartGame}>Start Game</button>
-      </h2>
-      <h3>Turn: {gameData.board.turns}</h3>
-      <h3>Current Turn: Player {gameData.board.currentPlayerId} 
-      <button on:click={endTurn}>End Turn for Player {gameData.board.currentPlayerId}</button>
-      </h3>
-      
-    </div>
-
-    <!-- Player 1 Section -->
-    <div>
-      <h3>{gameData.board.player1.name} (Health: {gameData.board.player1.health})</h3>
-      <p>Cards in Match Deck: {gameData.board.player1.matchDeck.cards.length}</p>
-      
-      <h4>Match Deck:</h4>
-      <ul>
-        {#each gameData.board.player1.matchDeck.cards as card}
-          <li>{card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})</li>
-        {/each}
-      </ul>
-
-      <h4>Graveyard:</h4>
-      <ul>
-        {#each gameData.board.player1.graveyard as card}
-          <li>{card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})</li>
-        {/each}
-      </ul>
-
-      <h4>Cards in Hand:</h4>
-      <ul>
-        {#each gameData.board.player1.hand as card}
-          <li>
-            {card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})
-            <button on:click={() => playCardP1(card.id)}>Play {card.name}</button>
-          </li>
-        {/each}
-      </ul>
-
-      <button on:click={drawCardP1}>Player 1 draw card</button>
-
-      <h4>Field:</h4>
-      <ul>
-        {#each gameData.board.player1Field as card}
-          <li>
-            Id:{card.id} {card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})
-            <button on:click={() => selectAttack(card.id, 'player2')}>Attack Opponent's Card</button>
-            <button on:click={() => attackPlayer(card.id, 'player1')}>Attack Player</button>
-          </li>
-        {/each}
-      </ul>
-    </div>
-
-    <!-- Player 2 Section (Made identical to Player 1) -->
-    <div>
-      <h3>{gameData.board.player2.name} (Health: {gameData.board.player2.health})</h3>
-      <p>Cards in Match Deck: {gameData.board.player2.matchDeck.cards.length}</p>
-
-      <h4>Match Deck:</h4>
-      <ul>
-        {#each gameData.board.player2.matchDeck.cards as card}
-          <li>{card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})</li>
-        {/each}
-      </ul>
-
-      <h4>Graveyard:</h4>
-      <ul>
-        {#each gameData.board.player2.graveyard as card}
-          <li>{card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})</li>
-        {/each}
-      </ul>
-
-      <h4>Cards in Hand:</h4>
-      <ul>
-        {#each gameData.board.player2.hand as card}
-          <li>
-            {card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})
-            <button on:click={() => playCardP2(card.id)}>Play {card.name}</button>
-          </li>
-        {/each}
-      </ul>
-
-      <button on:click={drawCardP2}>Player 2 draw card</button>
-
-      <h4>Field:</h4>
-      <ul>
-        {#each gameData.board.player2Field as card}
-          <li>
-            Id:{card.id} {card.name} (Health: {card.health}, Attack: {card.attack}, Rarity: {card.rarity})
-            <button on:click={() => selectAttack(card.id, 'player1')}>Attack Opponent's Card</button>
-            <button on:click={() => attackPlayer(card.id, 'player2')}>Attack Player</button>
-          </li>
-        {/each}
-      </ul>
-    </div>
-
-
-
-  {:else}
-    <p>Loading match data...</p>
   {/if}
-  {/if}
-</div>
+
+<Board gameData={gameData} errorMessage={errorMessage} />
+
+
+
+<style>
+  /* From Uiverse.io by StealthWorm */ 
+.btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 13rem;
+  overflow: hidden;
+  height: 3rem;
+  background-size: 300% 300%;
+  cursor: pointer;
+  backdrop-filter: blur(1rem);
+  border-radius: 5rem;
+  transition: 0.5s;
+  animation: gradient_301 5s ease infinite;
+  border: double 4px transparent;
+  background-image: linear-gradient(#212121, #212121),
+    linear-gradient(
+      137.48deg,
+      #ffdb3b 10%,
+      #fe53bb 45%,
+      #8f51ea 67%,
+      #0044ff 87%
+    );
+  background-origin: border-box;
+  background-clip: content-box, border-box;
+}
+
+#container-stars {
+  position: absolute;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  transition: 0.5s;
+  backdrop-filter: blur(1rem);
+  border-radius: 5rem;
+}
+
+strong {
+  z-index: 2;
+  font-family: "Avalors Personal Use";
+  font-size: 12px;
+  letter-spacing: 5px;
+  color: #ffffff;
+  text-shadow: 0 0 4px white;
+}
+
+#glow {
+  position: absolute;
+  display: flex;
+  width: 12rem;
+}
+
+.circle {
+  width: 100%;
+  height: 30px;
+  filter: blur(2rem);
+  animation: pulse_3011 4s infinite;
+  z-index: -1;
+}
+
+.circle:nth-of-type(1) {
+  background: rgba(254, 83, 186, 0.636);
+}
+
+.circle:nth-of-type(2) {
+  background: rgba(142, 81, 234, 0.704);
+}
+
+.btn:hover #container-stars {
+  z-index: 1;
+  background-color: #212121;
+}
+
+.btn:hover {
+  transform: scale(1.1);
+}
+
+.btn:active {
+  border: double 4px #fe53bb;
+  background-origin: border-box;
+  background-clip: content-box, border-box;
+  animation: none;
+}
+
+.btn:active .circle {
+  background: #fe53bb;
+}
+
+#stars {
+  position: relative;
+  background: transparent;
+  width: 200rem;
+  height: 200rem;
+}
+
+#stars::after {
+  content: "";
+  position: absolute;
+  top: -10rem;
+  left: -100rem;
+  width: 100%;
+  height: 100%;
+  animation: animStarRotate 90s linear infinite;
+}
+
+#stars::after {
+  background-image: radial-gradient(#ffffff 1px, transparent 1%);
+  background-size: 50px 50px;
+}
+
+#stars::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 170%;
+  height: 500%;
+  animation: animStar 60s linear infinite;
+}
+
+#stars::before {
+  background-image: radial-gradient(#ffffff 1px, transparent 1%);
+  background-size: 50px 50px;
+  opacity: 0.5;
+}
+
+@keyframes animStar {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-135rem);
+  }
+}
+
+@keyframes animStarRotate {
+  from {
+    transform: rotate(360deg);
+  }
+
+  to {
+    transform: rotate(0);
+  }
+}
+
+@keyframes gradient_301 {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes pulse_3011 {
+  0% {
+    transform: scale(0.75);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  }
+
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+  }
+
+  100% {
+    transform: scale(0.75);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+  }
+}
+
+</style>

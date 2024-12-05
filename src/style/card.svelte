@@ -21,6 +21,7 @@
       font-size: larger;
       transform: scale(1.05); 
     }
+    
   </style>
   
   <div class="card">
