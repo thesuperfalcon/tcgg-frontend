@@ -24,6 +24,10 @@
     player2Id = gameData.player2.id;
     currentPlayerId = gameData.board.currentPlayerId;
 
+    if(gameData.player1.graveyard.length > 0 || gameData.player2.graveyard.length > 0) {
+      console.log("Player 1 graveyard: ", gameData.player1.graveyard.length);
+      console.log("Player 2 graveyard: ", gameData.player2.graveyard.length);
+    }
   // Start the turn for the current player if game is initialized
   }
 }
@@ -38,7 +42,6 @@ async function StartGame() {
     currentPlayerId = gameData.board.currentPlayerId;
     
     console.log('Starting turn for Player', currentPlayerId);
-    await fetchStartTurn(currentPlayerId); // Start the new player's turn
     gameData = await fetchMatchData(); // Fetch initial game data
     console.log('Turn started for Player', currentPlayerId);
   } catch (error) {
