@@ -1,11 +1,11 @@
 <script>
 	import { onMount } from 'svelte';
+  import { turnInProgress } from '$lib/turnstore.js';
   import { fetchDrawRndCardP1, fetchDrawRndCardP2, fetchPlayCardP1, fetchPlayCardP2, fetchAttackCard } from '$api/card.js';
-	import { fetchMatchData, fetchStartGame, fetchEndTurn } from '$api/match.js'; // Use the API module
+	import { fetchMatchData, fetchStartGame, fetchEndTurn, fetchStartTurn } from '$api/match.js'; // Use the API module
   import { fetchAttackPlayer1, fetchAttackPlayer2 } from '$api/player.js';
   import Board from '../style/board.svelte';
   import GetGame from '$lib/getgame.svelte';
-
 
 	let gameData = null;
 	let errorMessage = '';
@@ -18,27 +18,35 @@
   let selectedDefendCardId = null;
 
   $: {
-    if (gameData) {
+  console.log("gameData", gameData);
+  if (gameData) {
+    player1Id = gameData.player1.id;
+    player2Id = gameData.player2.id;
+    currentPlayerId = gameData.board.currentPlayerId;
 
-      player1Id = gameData.player1.id;
-      player2Id = gameData.player2.id;
-
-      currentPlayerId = gameData.board.currentPlayerId;
-
-    }
+  // Start the turn for the current player if game is initialized
   }
+}
 
-  async function StartGame(){
-    try {
-      const result = await fetchStartGame();
-      console.log('Game started:', result);
-      gameData = result;
-      gameData = await fetchMatchData();
-      currentPlayerId = gameData.board.currentPlayerId;
-    } catch (error) {
-      errorMessage = `Failed to start game: ${error.message}`;
-    }
+
+
+async function StartGame() {
+  try {
+    const result = await fetchStartGame();
+    console.log('Game started:', result);
+    gameData = await fetchMatchData(); // Fetch initial game data
+    currentPlayerId = gameData.board.currentPlayerId;
+    
+    console.log('Starting turn for Player', currentPlayerId);
+    await fetchStartTurn(currentPlayerId); // Start the new player's turn
+    gameData = await fetchMatchData(); // Fetch initial game data
+    console.log('Turn started for Player', currentPlayerId);
+  } catch (error) {
+    errorMessage = `Failed to start game: ${error.message}`;
+    console.error(error);
   }
+}
+
 
 	onMount(async () => {
 		try {
@@ -50,29 +58,26 @@
 
 
   async function endTurn() {
-    try {
-      if (!gameData ||currentPlayerId === null) {
-        throw new Error('No player has started yet.');
-      }
-      
-      console.log('Ending turn for player:', currentPlayerId)
-
-      const result = await fetchEndTurn(currentPlayerId);
-      console.log('Turn ended for player:', currentPlayerId, result);
-
-      // Switch to the next player's turn
-      if (currentPlayerId === player1Id) {
-        currentPlayerId = player2Id;
-      } else {
-        currentPlayerId = player1Id;
-      }
-
-      gameData = await fetchMatchData();
-    } catch (error) {
-      errorMessage = `Failed to end turn for player ${currentPlayerId}: ${error.message}`;
+  try {
+    if (!gameData || currentPlayerId === null) {
+      throw new Error('No player has started yet.');
     }
+
+    console.log('Ending turn for Player:', currentPlayerId);
+    await fetchEndTurn(currentPlayerId); // Perform end-turn logic
+    turnInProgress.set(false);
+    gameData = await fetchMatchData(); // Refresh game state
+
+    // Switch to the next player's turn
+    currentPlayerId = currentPlayerId === player1Id ? player2Id : player1Id;
+
+
+  } catch (error) {
+    errorMessage = `Failed to end turn for Player ${currentPlayerId}: ${error.message}`;
   }
-  
+}
+
+
   async function playCardP1(cardId) {
     try {
       const result = await fetchPlayCardP1(cardId); // Pass the selected cardId for Player 1
@@ -158,7 +163,7 @@
   {:else if gameData}
       <h2>Board Info || Turn: {gameData.board.turns} Current Turn: Player {gameData.board.currentPlayerId}</h2>
       <button onclick={endTurn}>End turn for player: {gameData.board.currentPlayerId}</button>
-      <Board gameData={gameData} errorMessage={errorMessage} onRestart={StartGame}/>
+      <Board gameData={gameData} errorMessage={errorMessage} onRestart={StartGame} turnInProgress={turnInProgress} />
       {:else}
         <p>Loading game data...</p>
   {/if}

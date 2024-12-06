@@ -2,13 +2,16 @@
   export let onRestart;
   import Card from '../style/card.svelte'; 
   import Deck from '../style/deck.svelte';
-  import { fetchMatchData, fetchStartGame, fetchEndTurn } from '$api/match.js'; // Use the API module
+  import { fetchMatchData, fetchStartGame, fetchEndTurn, fetchStartTurn } from '$api/match.js'; // Use the API module
   import { fetchDrawRndCardP1, fetchDrawRndCardP2, fetchPlayCardP1, fetchPlayCardP2, fetchAttackCard } from '$api/card.js';
   import { fetchAttackPlayer1, fetchAttackPlayer2 } from '$api/player.js';
+  import { turnInProgress } from '$lib/turnstore.js';
+
 
 
   export let gameData = null; 
   export let errorMessage = '';
+
   let currentPlayerId = null;
   // let player1Id = null;
   // let player2Id = null;
@@ -41,23 +44,32 @@
 
       currentPlayerId = gameData.board.currentPlayerId;
 
+      console.log("player 1: ", player1.id);
+      console.log("player 2: ", player2.id);
+      console.log("current player: ", currentPlayerId);
     }
   }
 
 
   async function drawCard(playerId) {
   try {
-    const result = playerId === 1 
-      ? await fetchDrawRndCardP1() 
-      : await fetchDrawRndCardP2(); 
+    // const result = playerId === 1 
+    //   ? await fetchDrawRndCardP1() 
+    //   : await fetchDrawRndCardP2(); 
 
-    console.log('Card drawn:', result);
+    // console.log('Card drawn:', result);
 
-    if (playerId === 1) {
-      selectedCardIdP1 = result.cardId;
-    } else {
-      selectedCardIdP2 = result.cardId; 
-    }
+    // if (playerId === 1) {
+    //   selectedCardIdP1 = result.cardId;
+    // } else {
+    //   selectedCardIdP2 = result.cardId; 
+    // }
+
+    if($turnInProgress) return;
+
+    await fetchStartTurn(playerId);
+
+    turnInProgress.set(true);
 
     gameData = await fetchMatchData();
   } catch (error) {
@@ -222,7 +234,10 @@ async function attackPlayer(cardId, playerId) {
       </div>
       {/each}
       <Deck>
+        {#if gameData.board.currentPlayerId === player1.id && turnInProgress}
+        
         <button onclick={() => drawCard(player1.id)}>Draw Card</button>
+        {/if}
       </Deck>
     </div>
     
@@ -275,7 +290,9 @@ async function attackPlayer(cardId, playerId) {
     <!-- Player 2 Hand (Row 4) -->
     <div class="row">
       <Deck>
+        {#if gameData.board.currentPlayerId === player2.id && turnInProgress}
         <button onclick={() => drawCard(player2.id)}>Draw Card</button>
+        {/if}
       </Deck>
       {#each player2Hand as card, index}
       <div onclick={() => playCard(2, card.id)}>
