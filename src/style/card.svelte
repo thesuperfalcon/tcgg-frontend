@@ -1,5 +1,5 @@
 <style>
-    .card {
+    /* .card {
       background-color: orange;
       border: 1px solid black; 
       display: flex;
@@ -20,7 +20,7 @@
       font-weight: bolder;
       font-size: larger;
       transform: scale(1.05); 
-    }
+    } */
     
   </style>
   
