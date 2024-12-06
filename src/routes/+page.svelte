@@ -149,33 +149,45 @@ async function StartGame() {
 
 
 </script>
+<div class="container">
 
-<button onclick={StartGame} type="button" class="btn">
-  <strong>Start Game</strong>
-  <div id="container-stars">
-    <div id="stars"></div>
-  </div>
-  <div id="glow">
-    <div class="circle"></div>
-    <div class="circle"></div>
-  </div>
-</button>
+  <div>
+  <button onclick={StartGame} type="button" class="btn">
+    <strong>Start Game</strong>
+    <div id="container-stars">
+      <div id="stars"></div>
+    </div>
+    <div id="glow">
+      <div class="circle"></div>
+      <div class="circle"></div>
+    </div>
+  </button>
 
 {#if errorMessage}
     <p style="color: red;">Error: {errorMessage}</p>
   {:else if gameData}
       <h2>Board Info || Turn: {gameData.board.turns} Current Turn: Player {gameData.board.currentPlayerId}</h2>
       <button onclick={endTurn}>End turn for player: {gameData.board.currentPlayerId}</button>
-      <Board gameData={gameData} errorMessage={errorMessage} onRestart={StartGame} turnInProgress={turnInProgress} />
-      {:else}
-        <p>Loading game data...</p>
   {/if}
-
-
+  </div>
+  <div>
+  <Board gameData={gameData} errorMessage={errorMessage} onRestart={StartGame} turnInProgress={turnInProgress} />
+</div>
+  </div>
 
 
 <style>
-  /* From Uiverse.io by StealthWorm */ 
+
+.container {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background-color: #2d2d2d;
+  color: white;
+  height: 100vh;
+  overflow: auto;
+
+}
+
 .btn {
   display: flex;
   justify-content: center;
