@@ -1,4 +1,5 @@
 <script>
+  export let onRestart;
   import Card from '../style/card.svelte'; 
   import Deck from '../style/deck.svelte';
   import { fetchMatchData, fetchStartGame, fetchEndTurn } from '$api/match.js'; // Use the API module
@@ -106,20 +107,31 @@ async function attackCard(attackCardId, defenseCardId, playerId) {
 
 async function attackPlayer(cardId, playerId) {
   try {
-    // Conditionally call the appropriate fetchAttackPlayer function based on the player
     const result = playerId === 1 
       ? await fetchAttackPlayer1(cardId) 
       : await fetchAttackPlayer2(cardId);
 
-    // Call the attackCard function with appropriate player ID
-    // attackCard(cardId, null, player === 1 ? 1 : 2);
+    console.log(`Player ${playerId} attacked with card ${cardId}:`, result);
 
-    // Fetch the latest game data to refresh the state
-    gameData = await fetchMatchData();  // Refresh the game state
+    // Refresh the game data after the attack
+    gameData = await fetchMatchData();
+
+    // Check for win condition
+    if (gameData.player1.health <= 0 || gameData.player2.health <= 0) {
+      const winner = gameData.player1.health > 0 
+        ? gameData.player1.name 
+        : gameData.player2.name;
+
+      gameData.status = "GameOver";
+      gameData.winner = winner;
+
+      console.log(`Game Over! Winner is ${winner}`);
+    }
   } catch (error) {
-    console.error('Error during attack:', error);
+    console.error('Error during player attack:', error);
   }
 }
+
 
 </script>
 
@@ -178,7 +190,13 @@ async function attackPlayer(cardId, playerId) {
   {#if errorMessage}
     <div class="error">{errorMessage}</div>
   {:else if gameData}
-
+{#if gameData.status === "GameOver"}
+<div class>
+  <h1>Game Over</h1>
+  <p>Winner: {gameData.winner}</p>
+  <button onclick={onRestart}>Restart Game</button>
+</div>
+{:else}
   <div class="row">
     <Card>
       <div class="non-clickable">
@@ -283,6 +301,7 @@ async function attackPlayer(cardId, playerId) {
       </div>
       </Card>
     </div>
+    {/if}
     {:else}
       <p style="text-align: center;">Loading game data...</p>
     {/if}
