@@ -157,12 +157,12 @@
     <p style="color: red;">Error: {errorMessage}</p>
   {:else if gameData}
       <h2>Board Info || Turn: {gameData.board.turns} Current Turn: Player {gameData.board.currentPlayerId}</h2>
-      <!-- <button onclick={StartGame}>Start Game</button> -->
       <button onclick={endTurn}>End turn for player: {gameData.board.currentPlayerId}</button>
-
+      <Board gameData={gameData} errorMessage={errorMessage} onRestart={StartGame}/>
+      {:else}
+        <p>Loading game data...</p>
   {/if}
 
-<Board gameData={gameData} errorMessage={errorMessage} />
 
 
 
