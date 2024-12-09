@@ -24,6 +24,10 @@ jobs:
         run: |
           npm install
 
+      - name: Install Vitest coverage dependency
+        run: |
+          npm install @vitest/coverage-v8 --save-dev
+
       - name: Build the project
         run: |
           npm run build
