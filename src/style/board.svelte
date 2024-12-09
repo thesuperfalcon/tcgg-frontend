@@ -137,23 +137,14 @@ async function attackPlayer(cardId, playerId) {
 </script>
 
 <style>
-:global(html, body) {
-  margin: 0;
-  padding: 0;
-  font-family: 'Arial', sans-serif;
-  height: 100%;
-  width: 100%;
-}
 
-.container {
-  display: grid;
-  grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr;
-  /* grid-template-rows: repeat(auto-fit, minmax(150px, 1fr)); */
+.row{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
   align-items: center;
-  padding: 5px;
-  background-color: #2d2d2d;
-  color: white;
-  overflow-y: auto;
+  min-height: 190px;
+  height: 190px;
 }
 
 .error {
@@ -172,6 +163,9 @@ async function attackPlayer(cardId, playerId) {
 
 .card-hand, .card-field {
   display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 170px;
 }
 
 .card-hand{
@@ -221,14 +215,7 @@ async function attackPlayer(cardId, playerId) {
   width: 240px;
   text-align: center;
   overflow-y: auto;
-}
-
-.row{
-  height: auto;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
+  height: 170px;
 }
 
 .card {
@@ -328,8 +315,6 @@ async function attackPlayer(cardId, playerId) {
 
 </style>
 
-
-<div class="container">
 
   {#if errorMessage}
     <div class="error">{errorMessage}</div>
@@ -475,5 +460,3 @@ async function attackPlayer(cardId, playerId) {
   {:else}
     <p style="text-align: center;">Loading game data...</p>
   {/if}
-</div>
-
