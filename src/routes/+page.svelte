@@ -164,42 +164,39 @@
   }
 </script>
 
+<!-- Board -->
 
-  <div class="container-status">
-    <!-- Status bar with button -->
-    <div>
-      <button onclick={StartGame} type="button" class="btn">
-        <strong>Start Game</strong>
-        <div id="container-stars">
-          <div id="stars"></div>
-        </div>
-        <div id="glow">
-          <div class="circle"></div>
-          <div class="circle"></div>
-        </div>
-      </button>
-    </div>
-    {#if errorMessage}
-      <p style="color: red;">Error: {errorMessage}</p>
-    {:else if gameData}
-      <h2>
-        Board Info || Turn: {gameData.board.turns} Current Turn: Player {gameData
-          .board.currentPlayerId}
-        <button onclick={endTurn}
-          >End turn for player: {gameData.board.currentPlayerId}</button
-        >
-      </h2>
-    {/if}
+<div class="container-status">
+  <!-- Status bar with button -->
+  <div>
+    <button onclick={StartGame} type="button" class="btn">
+      <strong>Start Game</strong>
+      <div id="container-stars">
+        <div id="stars"></div>
+      </div>
+      <div id="glow">
+        <div class="circle"></div>
+        <div class="circle"></div>
+      </div>
+    </button>
   </div>
-
-  <!-- Board -->
-  <div class="container-board">
-    <Board {gameData} {errorMessage} onRestart={StartGame} {turnInProgress} />
-  </div>
-
+  {#if errorMessage}
+    <p style="color: red;">Error: {errorMessage}</p>
+  {:else if gameData}
+    <h2>
+      Board Info || Turn: {gameData.board.turns} Current Turn: Player {gameData
+        .board.currentPlayerId}
+      <button onclick={endTurn}
+        >End turn for player: {gameData.board.currentPlayerId}</button
+      >
+    </h2>
+  {/if}
+</div>
+<div class="container-board">
+  <Board {gameData} {errorMessage} onRestart={StartGame} {turnInProgress} />
+</div>
 
 <style>
-
   .container {
     display: flex;
     flex-direction: column;
@@ -211,14 +208,15 @@
     background-color: rgb(138, 138, 138);
     color: white;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     overflow: hidden;
   }
 
   .container-board {
     display: flex;
     flex-direction: column;
-    flex: 1;
+    justify-content: space-between;
+    align-items: center;
     background-color: #2d2d2d;
     color: white;
     overflow: hidden;
