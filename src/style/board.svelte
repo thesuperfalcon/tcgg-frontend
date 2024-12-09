@@ -315,7 +315,7 @@ async function attackPlayer(cardId, playerId) {
 
 </style>
 
-
+<div>
   {#if errorMessage}
     <div class="error">{errorMessage}</div>
     {:else if gameData}
@@ -460,3 +460,4 @@ async function attackPlayer(cardId, playerId) {
   {:else}
     <p style="text-align: center;">Loading game data...</p>
   {/if}
+</div>

@@ -1,15 +1,28 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		%sveltekit.head%
-		<style>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%sveltekit.assets%/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    %sveltekit.head%
+    <style>
+      :global(html, body) {
+        margin: 0;
+        padding: 0;
+        font-family: "Arial", sans-serif;
+        background-color: #fe53bb;
+      }
 
-		</style>
-	</head>
-	<body data-sveltekit-preload-data="hover">
-		<div>%sveltekit.body%</div>
-	</body>
+	  .holdingcontainer{
+		width: 100%;
+		/* max-height: 100vh;
+		height: 100vh; */
+		display: flex;
+		flex-direction: column;
+	  }
+    </style>
+  </head>
+  <body data-sveltekit-preload-data="hover">
+    <div class="holdingcontainer">%sveltekit.body%</div>
+  </body>
 </html>
