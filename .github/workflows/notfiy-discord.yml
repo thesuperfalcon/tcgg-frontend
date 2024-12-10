@@ -82,9 +82,9 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{
             "embeds": [{
-              "title": "🚀 TCGG-API!",
+              "title": "🚀 TCGG-Frontend!",
               "description": "Main uppdaterad.",
-              "color": 5300192,
+              "color": 8388736,
               "fields": [
                 { 
                   "name": "Antal rader kod ändrat", 
