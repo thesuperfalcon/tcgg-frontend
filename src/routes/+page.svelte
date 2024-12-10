@@ -28,6 +28,8 @@
   let player2Hand = [];
   let player1Field = [];
   let player2Field = [];
+  let player1Ready = false;
+  let player2Ready = false;
 
   $: {
     console.log("gameData", gameData);
@@ -62,12 +64,14 @@
     try {
       const result = await fetchStartGame();
       console.log("Game started:", result);
-      gameData = await fetchMatchData();
-      currentPlayerId = gameData.board.currentPlayerId;
 
+      gameData = await fetchMatchData();
+      currentPlayerId = gameData.board.currentPlayerId; 
       console.log("Starting turn for Player", currentPlayerId);
+
       gameData = await fetchMatchData();
       console.log("Turn started for Player", currentPlayerId);
+      
     } catch (error) {
       errorMessage = `Failed to start game: ${error.message}`;
       console.error(error);
@@ -110,12 +114,16 @@
 
   async function playCard(playerId, cardId) {
     try {
+
+      if (player1Ready || player2Ready){
+      
       const result =
         playerId == 1
           ? await fetchPlayCardP1(cardId)
           : await fetchPlayCardP2(cardId);
       console.log("Card played for Player:", result);
       gameData = await fetchMatchData();
+    }
     } catch (error) {
       errorMessage = `Failed to play card for Player: ${error.message}`;
     }
@@ -174,8 +182,16 @@
           : await fetchAttackPlayer2(cardId);
 
       console.log(`Player ${playerId} attacked with card ${cardId}:`, result);
+      await fetchMatchData();
+      await checkPlayerHealth();
+      
+    } catch (error) {
+      console.error("Error during player attack:", error);
+    }
+  }
 
-      gameData = await fetchMatchData();
+  async function checkPlayerHealth(){
+    gameData = await fetchMatchData();
 
       if (gameData.player1.health <= 0 || gameData.player2.health <= 0) {
         const winner =
@@ -186,11 +202,11 @@
         gameData.status = "GameOver";
         gameData.winner = winner;
 
+        await fetchMatchData();
         console.log(`Game Over! Winner is ${winner}`);
+
+        
       }
-    } catch (error) {
-      console.error("Error during player attack:", error);
-    }
   }
 
   async function endTurn() {
@@ -206,19 +222,30 @@
 
       currentPlayerId = currentPlayerId === player1Id ? player2Id : player1Id;
 
+
+      player1Ready = false;
+      player2Ready = false;
+
       await drawCard(currentPlayerId);
     } catch (error) {
       errorMessage = `Failed to end turn for Player ${currentPlayerId}: ${error.message}`;
     }
   }
+
+  function setPlayer1Active(){
+    player1Ready = true;
+  }
+
+  function setPlayer2Active(){
+    player2Ready = true;
+  }
 </script>
 
 <div class="container">
   <header class="header">
+    <button onclick={StartGame} type="button" class="btn">Start Game</button>
     {#if gameData}
-      <h2>
-        <button onclick={StartGame} type="button" class="btn">Start Game</button
-        >
+      <h3>
         Turn: {gameData.board.turns}
         <span>
           Current Turn: Player {gameData.board.currentPlayerId}
@@ -226,7 +253,7 @@
             End turn for player: {gameData.board.currentPlayerId}
           </button>
         </span>
-      </h2>
+      </h3>
     {/if}
     {#if errorMessage}
       <div class="error">{errorMessage}</div>
@@ -236,21 +263,22 @@
   <div class="content">
     {#if gameData}
       {#if gameData.status === "GameOver"}
-        <div>
+        <div class="end-game">
           <h1>Game Over</h1>
           <p>Winner: {gameData.winner}</p>
-          <button onclick={onRestart}>Restart Game</button>
+          <button onclick={StartGame}>Restart Game</button>
         </div>
       {:else}
+
         <aside class="sidebar left">
           <div class="players">
             <div class="player-info" id="p1">
-              <div class="deck">
-                <h1>Cards: {player1.matchDeck.cards.length}</h1>
-              </div>
-              <div>{player1.name}</div>
-              <div>HP: {player1.health}</div>
-              <div>Graveyard: {player2.graveyard.length}</div>
+              <h2>{player1.name}</h2>
+              <h2>Cards: {player1.matchDeck.cards.length}</h2>
+              <h2>HP: {player1.health}</h2>
+              <h2>Graveyard: {player1.graveyard.length}</h2>
+              <button class="btn-ready ready-btn {currentPlayerId === player1Id && !player1Ready ? 'highlight-btn' : ''}" 
+              onclick={setPlayer1Active}> Ready</button>
             </div>
           </div>
         </aside>
@@ -264,11 +292,13 @@
                   <div class="card">
                     {#if card}
                       <div class="card-content">
+                        {#if currentPlayerId === 1 && player1Ready}
                         <div class="card-name">{card.name}</div>
                         <div class="card-stats">
                           Health: {card.health}<br />
                           Attack: {card.attack}
                         </div>
+                        {/if}
                       </div>
                     {:else}
                       <div class="card-name">P1 Hand {index + 1}</div>
@@ -278,6 +308,7 @@
               {/each}
             </div>
             <h4 class="center-text">Player 1 hand</h4>
+            
           </div>
           <div class="row">
             <!-- Player 1 Field -->
@@ -292,16 +323,15 @@
                     {#if card}
                       <div class="card-content">
                         <div class="card-name">{card.name}</div>
-                        <div class="card-stats">
-                          Health: {card.health}<br />
-                          Attack: {card.attack}
-                        </div>
                         <div class="action-buttons">
                           <button
                             class="deck-button"
-                            onclick={() => attackPlayer(card.id, player1.id)}
-                            >Attack Player</button
-                          >
+                            onclick={() => attackPlayer(card.id, player1.id)}>Attack Player
+                          </button>
+                        </div>
+                        <div class="card-stats">
+                          Health: {card.health}<br />
+                          Attack: {card.attack}
                         </div>
                       </div>
                     {:else}
@@ -326,17 +356,16 @@
                     {#if card}
                       <div class="card-content">
                         <div class="card-name">{card.name}</div>
-                        <div class="card-stats">
-                          Health: {card.health}<br />
-                          Attack: {card.attack}
-                        </div>
                         <div class="action-buttons">
                           <button
                             class="deck-button"
-                            onclick={() => attackPlayer(card.id, player2.id)}
-                            >Attack Player</button
-                          >
+                            onclick={() => attackPlayer(card.id, player2.id)}>Attack Player
+                          </button>
                         </div>
+                        <div class="card-stats">
+                          Health: {card.health}<br />
+                          Attack: {card.attack}
+                        </div>      
                       </div>
                     {:else}
                       <div class="card-name">P2 Field {index + 1}</div>
@@ -349,17 +378,20 @@
           </div>
           <div class="row">
             <!-- Player 2 Hand -->
+            
             <div class="card-hand" id="p2">
               {#each player2Hand as card, index}
                 <div onclick={() => playCard(2, card.id)}>
                   <div class="card">
                     {#if card}
                       <div class="card-content">
+                        {#if currentPlayerId === 2 && player2Ready}
                         <div class="card-name">{card.name}</div>
                         <div class="card-stats">
                           Health: {card.health}<br />
                           Attack: {card.attack}
                         </div>
+                        {/if}
                       </div>
                     {:else}
                       <div class="card-name">P2 Hand {index + 1}</div>
@@ -369,6 +401,7 @@
               {/each}
             </div>
             <h4 class="center-text">Player 2 hand</h4>
+            
           </div>
         </main>
 
@@ -376,12 +409,12 @@
           <!-- Player 2 Info and Deck -->
           <div class="players">
             <div class="player-info" id="p2">
-              <div class="deck">
-                <h1>Cards: {player2.matchDeck.cards.length}</h1>
-              </div>
-              <div>{player2.name}</div>
-              <div>HP: {player2.health}</div>
-              <div>Graveyard: {player2.graveyard.length}</div>
+              <h2>{player2.name}</h2>
+              <h2>Cards: {player2.matchDeck.cards.length}</h2>
+              <h2>HP: {player2.health}</h2>
+              <h2>Graveyard: {player2.graveyard.length}</h2>
+              <button  class="btn-ready ready-btn {currentPlayerId === player2Id && !player2Ready ? 'highlight-btn' : ''}" 
+              onclick={setPlayer2Active}> Ready</button>
             </div>
           </div>
         </aside>
@@ -412,8 +445,11 @@
   }
 
   .header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex: 1;
-    background-color: rgb(138, 138, 138);
+    background-color: #ff7e5f;
     color: white;
     text-align: center;
     padding: 1rem;
@@ -427,7 +463,7 @@
   }
 
   .sidebar {
-    background-color: #ddd;
+    background: linear-gradient(to bottom, #ff7e5f, #feb47b);
     padding: 1rem;
     flex: 0 0 200px;
   }
@@ -438,21 +474,22 @@
 
   .right {
     display: flex;
-    border-left: 1px solid #bbb;
+    border-left: 2px solid #926464;
     align-items: flex-end;
   }
 
   .main {
     flex: 1;
-    background-color: #e0e0e0;
+    background-color: #feb47b; 
     display: flex;
     flex-direction: column;
+    
   }
 
   .row {
-    background-color: #e0e0e0;
+    background-color: #feb47b; 
     padding: 1rem;
-    border: 1px solid #ccc;
+    border-bottom: 1px solid #575757;
     text-align: center;
     justify-content: center;
     flex-direction: column;
@@ -490,8 +527,8 @@
 
   .card-hand {
     .card {
-      margin-left: -10px;
-      margin-right: -10px;
+      margin-left: -8px;
+      margin-right: -8px;
       z-index: 1;
     }
     font-weight: bold;
@@ -507,18 +544,20 @@
     .card {
       border: gold 2px solid;
     }
-    .deck {
-      background-color: gold;
-    }
   }
 
   :global(#p2) {
     .card {
-      border: red 2px solid;
+      border: #17a2b8 2px solid;
     }
-    .deck {
-      background-color: red;
-    }
+  }
+
+  .player-info#p1{
+    border: gold 3px solid;
+  }
+
+  .player-info#p2{
+    border: #17a2b8 3px solid;
   }
 
   .player-info {
@@ -526,11 +565,11 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: #555;
+    background-color: #696969bb;
     padding: 8px;
     border-radius: 10px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
-    width: 240px;
+    width: 180px;
     text-align: center;
     overflow-y: auto;
     height: 170px;
@@ -571,39 +610,18 @@
     font-size: 1em;
     font-weight: bold;
     color: #333;
+    
   }
 
   .card-stats {
     font-size: 0.9em;
-    color: #555;
+    color: #333;
     margin-top: 5px;
-  }
-
-  .deck {
-    background-color: greenyellow;
-    border: 1px solid black;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 10px;
-    text-align: center;
-    font-size: 12px;
-    height: 150px;
-    width: 100px;
-    box-sizing: border-box;
-    border-radius: 4px;
-    transition: transform 0.2s;
-  }
-
-  .deck:hover {
-    font-weight: bolder;
-    font-size: larger;
-    transform: scale(1.05);
+    font-weight: bold;
   }
 
   .deck-button {
-    background-color: #f4e04d;
+    background-color: #0dbd33;
     border: none;
     color: #2d2d2d;
     padding: 8px 16px;
@@ -624,24 +642,34 @@
     gap: 10px;
   }
 
-  .card-name,
-  .card-health,
-  .card-attack {
-    font-size: 0.9em;
-    margin: 3px 0;
-  }
-
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.3rem 0.8rem; /* Smaller padding */
-    font-size: 0.875rem; /* Reduced font size */
-    font-weight: 500; /* Medium weight */
+    padding: 0.3rem 0.8rem;
+    font-size: 0.875rem;
+    font-weight: 500;
     color: #fff;
     background-color: #007bff;
     border: none;
-    border-radius: 3px; /* Slightly rounded corners */
+    border-radius: 3px;
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .btn-ready {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #000000;
+    background-color: #ffffff;
+    border: none;
+    border-radius: 3px;
     cursor: pointer;
     transition:
       background-color 0.2s ease,
@@ -650,16 +678,56 @@
 
   .btn:hover {
     background-color: #0056b3;
-    transform: scale(1.05); /* Subtle hover effect */
+    transform: scale(1.05);
   }
 
   .btn:active {
-    background-color: #004085; /* Darker blue for active state */
-    transform: scale(0.98); /* Slight "pressed" effect */
+    background-color: #004085;
+    transform: scale(0.98);
   }
 
-  .btn.small {
-    padding: 0.2rem 0.6rem; /* Even smaller padding for .small class */
-    font-size: 0.75rem; /* Tiny font size */
-  }
+  .highlight-btn {
+  background-color: #9b59b6;
+  border: 2px solid #8e44ad;
+  color: white;
+  font-weight: bold;
+}
+
+.highlight-btn:hover {
+  background-color: #8e44ad;
+}
+
+
+.end-game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(to bottom, #ff7e5f, #feb47b);
+  color: white;
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.end-game h1 {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 5px;
+  font-weight: bold;
+  animation: fadeIn 1s ease-out;
+}
+
+.end-game p {
+  font-size: 2rem;
+  margin-bottom: 40px;
+  font-style: italic;
+  animation: fadeIn 1.5s ease-out;
+}
+
+  
 </style>
