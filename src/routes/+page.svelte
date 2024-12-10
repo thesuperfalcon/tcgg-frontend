@@ -215,10 +215,9 @@
 
 <div class="container">
   <header class="header">
+    <button onclick={StartGame} type="button" class="btn">Start Game</button>
     {#if gameData}
-      <h2>
-        <button onclick={StartGame} type="button" class="btn">Start Game</button
-        >
+      <h3>
         Turn: {gameData.board.turns}
         <span>
           Current Turn: Player {gameData.board.currentPlayerId}
@@ -226,7 +225,7 @@
             End turn for player: {gameData.board.currentPlayerId}
           </button>
         </span>
-      </h2>
+      </h3>
     {/if}
     {#if errorMessage}
       <div class="error">{errorMessage}</div>
@@ -245,12 +244,10 @@
         <aside class="sidebar left">
           <div class="players">
             <div class="player-info" id="p1">
-              <div class="deck">
-                <h1>Cards: {player1.matchDeck.cards.length}</h1>
-              </div>
-              <div>{player1.name}</div>
-              <div>HP: {player1.health}</div>
-              <div>Graveyard: {player2.graveyard.length}</div>
+              <h2>{player1.name}</h2>
+              <h2>Cards: {player1.matchDeck.cards.length}</h2>
+              <h2>HP: {player1.health}</h2>
+              <h2>Graveyard: {player1.graveyard.length}</h2>
             </div>
           </div>
         </aside>
@@ -292,16 +289,15 @@
                     {#if card}
                       <div class="card-content">
                         <div class="card-name">{card.name}</div>
-                        <div class="card-stats">
-                          Health: {card.health}<br />
-                          Attack: {card.attack}
-                        </div>
                         <div class="action-buttons">
                           <button
                             class="deck-button"
-                            onclick={() => attackPlayer(card.id, player1.id)}
-                            >Attack Player</button
-                          >
+                            onclick={() => attackPlayer(card.id, player1.id)}>Attack Player
+                          </button>
+                        </div>
+                        <div class="card-stats">
+                          Health: {card.health}<br />
+                          Attack: {card.attack}
                         </div>
                       </div>
                     {:else}
@@ -326,17 +322,16 @@
                     {#if card}
                       <div class="card-content">
                         <div class="card-name">{card.name}</div>
-                        <div class="card-stats">
-                          Health: {card.health}<br />
-                          Attack: {card.attack}
-                        </div>
                         <div class="action-buttons">
                           <button
                             class="deck-button"
-                            onclick={() => attackPlayer(card.id, player2.id)}
-                            >Attack Player</button
-                          >
+                            onclick={() => attackPlayer(card.id, player2.id)}>Attack Player
+                          </button>
                         </div>
+                        <div class="card-stats">
+                          Health: {card.health}<br />
+                          Attack: {card.attack}
+                        </div>      
                       </div>
                     {:else}
                       <div class="card-name">P2 Field {index + 1}</div>
@@ -376,12 +371,10 @@
           <!-- Player 2 Info and Deck -->
           <div class="players">
             <div class="player-info" id="p2">
-              <div class="deck">
-                <h1>Cards: {player2.matchDeck.cards.length}</h1>
-              </div>
-              <div>{player2.name}</div>
-              <div>HP: {player2.health}</div>
-              <div>Graveyard: {player2.graveyard.length}</div>
+              <h2>{player2.name}</h2>
+              <h2>Cards: {player2.matchDeck.cards.length}</h2>
+              <h2>HP: {player2.health}</h2>
+              <h2>Graveyard: {player2.graveyard.length}</h2>
             </div>
           </div>
         </aside>
@@ -412,6 +405,9 @@
   }
 
   .header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     flex: 1;
     background-color: rgb(138, 138, 138);
     color: white;
@@ -438,7 +434,7 @@
 
   .right {
     display: flex;
-    border-left: 1px solid #bbb;
+    border-left: 2px solid #926464;
     align-items: flex-end;
   }
 
@@ -490,8 +486,8 @@
 
   .card-hand {
     .card {
-      margin-left: -10px;
-      margin-right: -10px;
+      margin-left: -8px;
+      margin-right: -8px;
       z-index: 1;
     }
     font-weight: bold;
@@ -507,18 +503,20 @@
     .card {
       border: gold 2px solid;
     }
-    .deck {
-      background-color: gold;
-    }
   }
 
   :global(#p2) {
     .card {
-      border: red 2px solid;
+      border: #17a2b8 2px solid;
     }
-    .deck {
-      background-color: red;
-    }
+  }
+
+  .player-info#p1{
+    border: gold 3px solid;
+  }
+
+  .player-info#p2{
+    border: #17a2b8 3px solid;
   }
 
   .player-info {
@@ -526,11 +524,11 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: #555;
+    background-color: #696969bb;
     padding: 8px;
     border-radius: 10px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
-    width: 240px;
+    width: 180px;
     text-align: center;
     overflow-y: auto;
     height: 170px;
@@ -571,39 +569,18 @@
     font-size: 1em;
     font-weight: bold;
     color: #333;
+    
   }
 
   .card-stats {
     font-size: 0.9em;
-    color: #555;
+    color: #333;
     margin-top: 5px;
-  }
-
-  .deck {
-    background-color: greenyellow;
-    border: 1px solid black;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 10px;
-    text-align: center;
-    font-size: 12px;
-    height: 150px;
-    width: 100px;
-    box-sizing: border-box;
-    border-radius: 4px;
-    transition: transform 0.2s;
-  }
-
-  .deck:hover {
-    font-weight: bolder;
-    font-size: larger;
-    transform: scale(1.05);
+    font-weight: bold;
   }
 
   .deck-button {
-    background-color: #f4e04d;
+    background-color: #0dbd33;
     border: none;
     color: #2d2d2d;
     padding: 8px 16px;
@@ -624,24 +601,17 @@
     gap: 10px;
   }
 
-  .card-name,
-  .card-health,
-  .card-attack {
-    font-size: 0.9em;
-    margin: 3px 0;
-  }
-
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.3rem 0.8rem; /* Smaller padding */
-    font-size: 0.875rem; /* Reduced font size */
-    font-weight: 500; /* Medium weight */
+    padding: 0.3rem 0.8rem;
+    font-size: 0.875rem;
+    font-weight: 500;
     color: #fff;
     background-color: #007bff;
     border: none;
-    border-radius: 3px; /* Slightly rounded corners */
+    border-radius: 3px;
     cursor: pointer;
     transition:
       background-color 0.2s ease,
@@ -650,16 +620,13 @@
 
   .btn:hover {
     background-color: #0056b3;
-    transform: scale(1.05); /* Subtle hover effect */
+    transform: scale(1.05);
   }
 
   .btn:active {
-    background-color: #004085; /* Darker blue for active state */
-    transform: scale(0.98); /* Slight "pressed" effect */
+    background-color: #004085;
+    transform: scale(0.98);
   }
 
-  .btn.small {
-    padding: 0.2rem 0.6rem; /* Even smaller padding for .small class */
-    font-size: 0.75rem; /* Tiny font size */
-  }
+  
 </style>
