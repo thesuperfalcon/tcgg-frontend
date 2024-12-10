@@ -28,6 +28,8 @@
   let player2Hand = [];
   let player1Field = [];
   let player2Field = [];
+  let player1Ready = false;
+  let player2Ready = false;
 
   $: {
     console.log("gameData", gameData);
@@ -112,13 +114,16 @@
 
   async function playCard(playerId, cardId) {
     try {
+
+      if (player1Ready || player2Ready){
+      
       const result =
         playerId == 1
           ? await fetchPlayCardP1(cardId)
           : await fetchPlayCardP2(cardId);
       console.log("Card played for Player:", result);
       gameData = await fetchMatchData();
-
+    }
     } catch (error) {
       errorMessage = `Failed to play card for Player: ${error.message}`;
     }
@@ -177,8 +182,16 @@
           : await fetchAttackPlayer2(cardId);
 
       console.log(`Player ${playerId} attacked with card ${cardId}:`, result);
+      await fetchMatchData();
+      await checkPlayerHealth();
+      
+    } catch (error) {
+      console.error("Error during player attack:", error);
+    }
+  }
 
-      gameData = await fetchMatchData();
+  async function checkPlayerHealth(){
+    gameData = await fetchMatchData();
 
       if (gameData.player1.health <= 0 || gameData.player2.health <= 0) {
         const winner =
@@ -189,11 +202,11 @@
         gameData.status = "GameOver";
         gameData.winner = winner;
 
+        await fetchMatchData();
         console.log(`Game Over! Winner is ${winner}`);
+
+        
       }
-    } catch (error) {
-      console.error("Error during player attack:", error);
-    }
   }
 
   async function endTurn() {
@@ -209,10 +222,22 @@
 
       currentPlayerId = currentPlayerId === player1Id ? player2Id : player1Id;
 
+
+      player1Ready = false;
+      player2Ready = false;
+
       await drawCard(currentPlayerId);
     } catch (error) {
       errorMessage = `Failed to end turn for Player ${currentPlayerId}: ${error.message}`;
     }
+  }
+
+  function setPlayer1Active(){
+    player1Ready = true;
+  }
+
+  function setPlayer2Active(){
+    player2Ready = true;
   }
 </script>
 
@@ -238,12 +263,13 @@
   <div class="content">
     {#if gameData}
       {#if gameData.status === "GameOver"}
-        <div>
+        <div class="end-game">
           <h1>Game Over</h1>
           <p>Winner: {gameData.winner}</p>
-          <button onclick={onRestart}>Restart Game</button>
+          <button onclick={StartGame}>Restart Game</button>
         </div>
       {:else}
+
         <aside class="sidebar left">
           <div class="players">
             <div class="player-info" id="p1">
@@ -251,6 +277,8 @@
               <h2>Cards: {player1.matchDeck.cards.length}</h2>
               <h2>HP: {player1.health}</h2>
               <h2>Graveyard: {player1.graveyard.length}</h2>
+              <button class="btn-ready ready-btn {currentPlayerId === player1Id && !player1Ready ? 'highlight-btn' : ''}" 
+              onclick={setPlayer1Active}> Ready</button>
             </div>
           </div>
         </aside>
@@ -264,11 +292,13 @@
                   <div class="card">
                     {#if card}
                       <div class="card-content">
+                        {#if currentPlayerId === 1 && player1Ready}
                         <div class="card-name">{card.name}</div>
                         <div class="card-stats">
                           Health: {card.health}<br />
                           Attack: {card.attack}
                         </div>
+                        {/if}
                       </div>
                     {:else}
                       <div class="card-name">P1 Hand {index + 1}</div>
@@ -278,6 +308,7 @@
               {/each}
             </div>
             <h4 class="center-text">Player 1 hand</h4>
+            
           </div>
           <div class="row">
             <!-- Player 1 Field -->
@@ -347,17 +378,20 @@
           </div>
           <div class="row">
             <!-- Player 2 Hand -->
+            
             <div class="card-hand" id="p2">
               {#each player2Hand as card, index}
                 <div onclick={() => playCard(2, card.id)}>
                   <div class="card">
                     {#if card}
                       <div class="card-content">
+                        {#if currentPlayerId === 2 && player2Ready}
                         <div class="card-name">{card.name}</div>
                         <div class="card-stats">
                           Health: {card.health}<br />
                           Attack: {card.attack}
                         </div>
+                        {/if}
                       </div>
                     {:else}
                       <div class="card-name">P2 Hand {index + 1}</div>
@@ -367,6 +401,7 @@
               {/each}
             </div>
             <h4 class="center-text">Player 2 hand</h4>
+            
           </div>
         </main>
 
@@ -378,6 +413,8 @@
               <h2>Cards: {player2.matchDeck.cards.length}</h2>
               <h2>HP: {player2.health}</h2>
               <h2>Graveyard: {player2.graveyard.length}</h2>
+              <button  class="btn-ready ready-btn {currentPlayerId === player2Id && !player2Ready ? 'highlight-btn' : ''}" 
+              onclick={setPlayer2Active}> Ready</button>
             </div>
           </div>
         </aside>
@@ -412,7 +449,7 @@
     align-items: center;
     justify-content: center;
     flex: 1;
-    background-color: rgb(138, 138, 138);
+    background-color: #ff7e5f;
     color: white;
     text-align: center;
     padding: 1rem;
@@ -426,7 +463,7 @@
   }
 
   .sidebar {
-    background-color: #ddd;
+    background: linear-gradient(to bottom, #ff7e5f, #feb47b);
     padding: 1rem;
     flex: 0 0 200px;
   }
@@ -443,15 +480,16 @@
 
   .main {
     flex: 1;
-    background-color: #e0e0e0;
+    background-color: #feb47b; 
     display: flex;
     flex-direction: column;
+    
   }
 
   .row {
-    background-color: #e0e0e0;
+    background-color: #feb47b; 
     padding: 1rem;
-    border: 1px solid #ccc;
+    border-bottom: 1px solid #575757;
     text-align: center;
     justify-content: center;
     flex-direction: column;
@@ -621,6 +659,23 @@
       transform 0.2s ease;
   }
 
+  .btn-ready {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #000000;
+    background-color: #ffffff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      transform 0.2s ease;
+  }
+
   .btn:hover {
     background-color: #0056b3;
     transform: scale(1.05);
@@ -630,6 +685,49 @@
     background-color: #004085;
     transform: scale(0.98);
   }
+
+  .highlight-btn {
+  background-color: #9b59b6;
+  border: 2px solid #8e44ad;
+  color: white;
+  font-weight: bold;
+}
+
+.highlight-btn:hover {
+  background-color: #8e44ad;
+}
+
+
+.end-game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(to bottom, #ff7e5f, #feb47b);
+  color: white;
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.end-game h1 {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 5px;
+  font-weight: bold;
+  animation: fadeIn 1s ease-out;
+}
+
+.end-game p {
+  font-size: 2rem;
+  margin-bottom: 40px;
+  font-style: italic;
+  animation: fadeIn 1.5s ease-out;
+}
 
   
 </style>
