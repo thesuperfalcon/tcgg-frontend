@@ -118,6 +118,7 @@
           : await fetchPlayCardP2(cardId);
       console.log("Card played for Player:", result);
       gameData = await fetchMatchData();
+
     } catch (error) {
       errorMessage = `Failed to play card for Player: ${error.message}`;
     }
