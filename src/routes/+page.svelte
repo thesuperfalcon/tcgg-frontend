@@ -13,7 +13,6 @@
     fetchEndTurn,
     fetchStartTurn,
   } from "$api/match.js";
- 
 
   let gameData = null;
   let errorMessage = "";
@@ -44,7 +43,7 @@
         console.log("Player 1 graveyard: ", gameData.player1.graveyard.length);
         console.log("Player 2 graveyard: ", gameData.player2.graveyard.length);
       }
-      
+
       player1Hand = gameData.player1.hand || [];
       player2Hand = gameData.player2.hand || [];
       player1Field = gameData.board.player1Field || [];
@@ -85,14 +84,25 @@
 
   async function drawCard(playerId) {
     try {
-  
       if ($turnInProgress) return;
 
-      await fetchStartTurn(playerId);
+      gameData = await fetchMatchData();
 
+       // Check if the player's deck has cards left
+      const playerDeck = playerId === 1 ? gameData.player1.matchDeck.cards : gameData.player2.matchDeck.cards;
+    
+      if (playerDeck.length === 0) {
+      errorMessage = `No cards left in Player ${playerId}'s deck to draw.`;
+      return; // Return early as there are no cards left
+      }
+
+
+      await fetchStartTurn(playerId);
       turnInProgress.set(true);
 
       gameData = await fetchMatchData();
+
+      errorMessage = "";
     } catch (error) {
       errorMessage = `Failed to draw card for player ${playerId}: ${error.message}`;
     }
@@ -195,199 +205,192 @@
       gameData = await fetchMatchData();
 
       currentPlayerId = currentPlayerId === player1Id ? player2Id : player1Id;
+
+      await drawCard(currentPlayerId);
     } catch (error) {
       errorMessage = `Failed to end turn for Player ${currentPlayerId}: ${error.message}`;
     }
   }
-
 </script>
 
 <div class="container">
   <header class="header">
-    {#if errorMessage}
-      <p style="color: red;">Error: {errorMessage}</p>
-    {:else if gameData}
+    {#if gameData}
       <h2>
-        <button onclick={StartGame} type="button" class="btn">Start Game</button>
+        <button onclick={StartGame} type="button" class="btn">Start Game</button
+        >
         Turn: {gameData.board.turns}
-        <span> Current Turn: Player {gameData
-          .board.currentPlayerId}
-              <button onclick={endTurn} class="btn">
-                End turn for player: {gameData.board.currentPlayerId}
-              </button>  
-        </span> 
+        <span>
+          Current Turn: Player {gameData.board.currentPlayerId}
+          <button onclick={endTurn} class="btn">
+            End turn for player: {gameData.board.currentPlayerId}
+          </button>
+        </span>
       </h2>
     {/if}
+    {#if errorMessage}
+      <div class="error">{errorMessage}</div>
+      {/if}
   </header>
 
-
   <div class="content">
-    {#if errorMessage}
-    <div class="error">{errorMessage}</div>
-  {:else if gameData}
-    {#if gameData.status === "GameOver"}
-      <div>
-        <h1>Game Over</h1>
-        <p>Winner: {gameData.winner}</p>
-        <button onclick={onRestart}>Restart Game</button>
-      </div>
-    {:else}
-
-
-    <aside class="sidebar left">
-      <div class="players">
-          <div class="player-info" id="p1">
-            <div class="deck">
-              {#if gameData.board.currentPlayerId === player1.id && turnInProgress}
-                <button onclick={() => drawCard(player1.id)}>Draw Card</button>
-              {/if}
+    {#if gameData}
+      {#if gameData.status === "GameOver"}
+        <div>
+          <h1>Game Over</h1>
+          <p>Winner: {gameData.winner}</p>
+          <button onclick={onRestart}>Restart Game</button>
+        </div>
+      {:else}
+        <aside class="sidebar left">
+          <div class="players">
+            <div class="player-info" id="p1">
+              <div class="deck">
+                <h1>Cards: {player1.matchDeck.cards.length}</h1>
+              </div>
+              <div>{player1.name}</div>
+              <div>HP: {player1.health}</div>
+              <div>Graveyard: {player2.graveyard.length}</div>
             </div>
-            <div>{player1.name}</div>
-            <div>HP: {player1.health}</div>
           </div>
-      </div>
-    </aside>
+        </aside>
 
-
-    <main class="main">
+        <main class="main">
           <div class="row">
             <!-- Player 1 Hand -->
-              <div class="card-hand" id="p1">
-                {#each player1Hand as card, index}
-                  <div onclick={() => playCard(1, card.id)}>
-                    <div class="card">
-                      {#if card}
-                        <div class="card-content">
-                          <div class="card-name">{card.name}</div>
-                          <div class="card-stats">
-                            Health: {card.health}<br />
-                            Attack: {card.attack}
-                          </div>
+            <div class="card-hand" id="p1">
+              {#each player1Hand as card, index}
+                <div onclick={() => playCard(1, card.id)}>
+                  <div class="card">
+                    {#if card}
+                      <div class="card-content">
+                        <div class="card-name">{card.name}</div>
+                        <div class="card-stats">
+                          Health: {card.health}<br />
+                          Attack: {card.attack}
                         </div>
-                      {:else}
-                        <div class="card-name">P1 Hand {index + 1}</div>
-                      {/if}
-                    </div>
+                      </div>
+                    {:else}
+                      <div class="card-name">P1 Hand {index + 1}</div>
+                    {/if}
                   </div>
-                {/each}
+                </div>
+              {/each}
             </div>
             <h4 class="center-text">Player 1 hand</h4>
           </div>
           <div class="row">
             <!-- Player 1 Field -->
-              <div class="card-field" id="p1">
-                {#each player1Field as card, index}
-                  <div
-                    class:selected={highlightedCards === card.id}
-                    class:highlight={highlightedCards.includes(card.id)}
-                    onclick={() => selectAttack(player1.id, card.id)}
-                  >
-                    <div class="card">
-                      {#if card}
-                        <div class="card-content">
-                          <div class="card-name">{card.name}</div>
-                          <div class="card-stats">
-                            Health: {card.health}<br />
-                            Attack: {card.attack}
-                          </div>
-                          <div class="action-buttons">
-                            <button
-                              class="deck-button"
-                              onclick={() => attackPlayer(card.id, player1.id)}
-                              >Attack Player</button
-                            >
-                          </div>
+            <div class="card-field" id="p1">
+              {#each player1Field as card, index}
+                <div
+                  class:selected={highlightedCards === card.id}
+                  class:highlight={highlightedCards.includes(card.id)}
+                  onclick={() => selectAttack(player1.id, card.id)}
+                >
+                  <div class="card">
+                    {#if card}
+                      <div class="card-content">
+                        <div class="card-name">{card.name}</div>
+                        <div class="card-stats">
+                          Health: {card.health}<br />
+                          Attack: {card.attack}
                         </div>
-                      {:else}
-                        <div class="card-name">P1 Field {index + 1}</div>
-                      {/if}
-                    </div>
+                        <div class="action-buttons">
+                          <button
+                            class="deck-button"
+                            onclick={() => attackPlayer(card.id, player1.id)}
+                            >Attack Player</button
+                          >
+                        </div>
+                      </div>
+                    {:else}
+                      <div class="card-name">P1 Field {index + 1}</div>
+                    {/if}
                   </div>
-                {/each}
+                </div>
+              {/each}
             </div>
             <h4 class="center-text">Player 1 field</h4>
           </div>
           <div class="row">
             <!-- Player 2 Field -->
-              <div class="card-field" id="p2">
-                {#each player2Field as card, index}
-                  <div
-                    class:selected={highlightedCards === card.id}
-                    class:highlight={highlightedCards.includes(card.id)}
-                    onclick={() => selectAttack(player2.id, card.id)}
-                  >
-                    <div class="card">
-                      {#if card}
-                        <div class="card-content">
-                          <div class="card-name">{card.name}</div>
-                          <div class="card-stats">
-                            Health: {card.health}<br />
-                            Attack: {card.attack}
-                          </div>
-                          <div class="action-buttons">
-                            <button
-                              class="deck-button"
-                              onclick={() => attackPlayer(card.id, player2.id)}
-                              >Attack Player</button
-                            >
-                          </div>
+            <div class="card-field" id="p2">
+              {#each player2Field as card, index}
+                <div
+                  class:selected={highlightedCards === card.id}
+                  class:highlight={highlightedCards.includes(card.id)}
+                  onclick={() => selectAttack(player2.id, card.id)}
+                >
+                  <div class="card">
+                    {#if card}
+                      <div class="card-content">
+                        <div class="card-name">{card.name}</div>
+                        <div class="card-stats">
+                          Health: {card.health}<br />
+                          Attack: {card.attack}
                         </div>
-                      {:else}
-                        <div class="card-name">P2 Field {index + 1}</div>
-                      {/if}
-                    </div>
+                        <div class="action-buttons">
+                          <button
+                            class="deck-button"
+                            onclick={() => attackPlayer(card.id, player2.id)}
+                            >Attack Player</button
+                          >
+                        </div>
+                      </div>
+                    {:else}
+                      <div class="card-name">P2 Field {index + 1}</div>
+                    {/if}
                   </div>
-                {/each}
-              </div>
-              <h4 class="center-text">Player 2 field</h4>
+                </div>
+              {/each}
+            </div>
+            <h4 class="center-text">Player 2 field</h4>
           </div>
           <div class="row">
             <!-- Player 2 Hand -->
-              <div class="card-hand" id="p2">
-                {#each player2Hand as card, index}
-                  <div onclick={() => playCard(2, card.id)}>
-                    <div class="card">
-                      {#if card}
-                        <div class="card-content">
-                          <div class="card-name">{card.name}</div>
-                          <div class="card-stats">
-                            Health: {card.health}<br />
-                            Attack: {card.attack}
-                          </div>
+            <div class="card-hand" id="p2">
+              {#each player2Hand as card, index}
+                <div onclick={() => playCard(2, card.id)}>
+                  <div class="card">
+                    {#if card}
+                      <div class="card-content">
+                        <div class="card-name">{card.name}</div>
+                        <div class="card-stats">
+                          Health: {card.health}<br />
+                          Attack: {card.attack}
                         </div>
-                      {:else}
-                        <div class="card-name">P2 Hand {index + 1}</div>
-                      {/if}
-                    </div>
+                      </div>
+                    {:else}
+                      <div class="card-name">P2 Hand {index + 1}</div>
+                    {/if}
                   </div>
-                {/each}
-              </div>
-              <h4 class="center-text">Player 2 hand</h4>
+                </div>
+              {/each}
             </div>
-    </main>
-
-    <aside class="sidebar right">
-         <!-- Player 2 Info and Deck -->
-         <div class="players">
-          <div class="player-info" id="p2">
-            <div class="deck">
-              {#if gameData.board.currentPlayerId === player2.id && turnInProgress}
-                <button onclick={() => drawCard(player2.id)}>Draw Card</button>
-              {/if}
-            </div>
-            <div>{player2.name}</div>
-            <div>HP: {player2.health}</div>
+            <h4 class="center-text">Player 2 hand</h4>
           </div>
-      </div>
-    </aside>
+        </main>
 
-    {/if}
+        <aside class="sidebar right">
+          <!-- Player 2 Info and Deck -->
+          <div class="players">
+            <div class="player-info" id="p2">
+              <div class="deck">
+                <h1>Cards: {player2.matchDeck.cards.length}</h1>
+              </div>
+              <div>{player2.name}</div>
+              <div>HP: {player2.health}</div>
+              <div>Graveyard: {player2.graveyard.length}</div>
+            </div>
+          </div>
+        </aside>
+      {/if}
     {:else}
       <p style="text-align: center;">Loading game data...</p>
     {/if}
   </div>
 </div>
-
 
 <style>
   * {
@@ -397,10 +400,10 @@
   }
 
   :global(html, body) {
-        margin: 0;
-        padding: 0;
-        font-family: "Arial", sans-serif;
-      }
+    margin: 0;
+    padding: 0;
+    font-family: "Arial", sans-serif;
+  }
 
   .container {
     display: flex;
@@ -444,7 +447,6 @@
     background-color: #e0e0e0;
     display: flex;
     flex-direction: column;
-
   }
 
   .row {
@@ -457,9 +459,8 @@
     display: flex;
   }
 
-  .center-text{
+  .center-text {
     text-align: center;
-   
   }
 
   .error {
@@ -630,36 +631,35 @@
     margin: 3px 0;
   }
 
-
-
   .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.3rem 0.8rem; /* Smaller padding */
-  font-size: 0.875rem; /* Reduced font size */
-  font-weight: 500; /* Medium weight */
-  color: #fff;
-  background-color: #007bff;
-  border: none;
-  border-radius: 3px; /* Slightly rounded corners */
-  cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.2s ease;
-}
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.3rem 0.8rem; /* Smaller padding */
+    font-size: 0.875rem; /* Reduced font size */
+    font-weight: 500; /* Medium weight */
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 3px; /* Slightly rounded corners */
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      transform 0.2s ease;
+  }
 
-.btn:hover {
-  background-color: #0056b3;
-  transform: scale(1.05); /* Subtle hover effect */
-}
+  .btn:hover {
+    background-color: #0056b3;
+    transform: scale(1.05); /* Subtle hover effect */
+  }
 
-.btn:active {
-  background-color: #004085; /* Darker blue for active state */
-  transform: scale(0.98); /* Slight "pressed" effect */
-}
+  .btn:active {
+    background-color: #004085; /* Darker blue for active state */
+    transform: scale(0.98); /* Slight "pressed" effect */
+  }
 
-.btn.small {
-  padding: 0.2rem 0.6rem; /* Even smaller padding for .small class */
-  font-size: 0.75rem; /* Tiny font size */
-}
-
+  .btn.small {
+    padding: 0.2rem 0.6rem; /* Even smaller padding for .small class */
+    font-size: 0.75rem; /* Tiny font size */
+  }
 </style>
