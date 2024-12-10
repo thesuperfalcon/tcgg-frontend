@@ -91,10 +91,10 @@
        // Check if the player's deck has cards left
       const playerDeck = playerId === 1 ? gameData.player1.matchDeck.cards : gameData.player2.matchDeck.cards;
     
-      if (playerDeck.length === 0) {
-      errorMessage = `No cards left in Player ${playerId}'s deck to draw.`;
-      return; // Return early as there are no cards left
-      }
+      // if (playerDeck.length === 0) {
+      // errorMessage = `No cards left in Player ${playerId}'s deck to draw.`;
+      // return; // Return early as there are no cards left
+      // }
 
 
       await fetchStartTurn(playerId);
