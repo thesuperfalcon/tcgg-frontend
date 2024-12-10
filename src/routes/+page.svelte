@@ -62,12 +62,14 @@
     try {
       const result = await fetchStartGame();
       console.log("Game started:", result);
-      gameData = await fetchMatchData();
-      currentPlayerId = gameData.board.currentPlayerId;
 
+      gameData = await fetchMatchData();
+      currentPlayerId = gameData.board.currentPlayerId; 
       console.log("Starting turn for Player", currentPlayerId);
+
       gameData = await fetchMatchData();
       console.log("Turn started for Player", currentPlayerId);
+      
     } catch (error) {
       errorMessage = `Failed to start game: ${error.message}`;
       console.error(error);
